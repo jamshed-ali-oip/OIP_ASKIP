@@ -1,22 +1,33 @@
 import {Dimensions, Image, StyleSheet, Text, View,TouchableOpacity} from 'react-native';
-import React from 'react';
+import React,{useEffect,useState} from 'react';
 import Forminput from '../../components/Forminput';
 import { useSelector,useDispatch } from 'react-redux';
-import { Send_link } from '../../redux/actions/user.action';
+import { Send_link, UserDetail } from '../../redux/actions/user.action';
 
 const {width, height} = Dimensions.get('window');
 
 
 const CPage9 = ({setPage}) => {
   const dispatch=useDispatch()
-  const email=useSelector(state => state?.auth?.User?.data?.email)
+  const [detail, setDetail] = useState()
+  const userId = useSelector((state) => state?.auth?.credential?.User?._id)
+  useEffect(() => {
+
+    UserInfo()
+
+  }, [])
+  const UserInfo = async () => {
+    const {data}  = await UserDetail(userId)
+    setDetail(data?.User)
+
+  }
   const userData=useSelector(state => state?.auth?.User) 
   const USER_DATA = useSelector((state) => state?.auth?.User)
   // const all_Data=useSelector(state => state?.user?.data)
-  console.log("TOU dekhle bhai",USER_DATA)
+  // console.log("TOU dekhle bhai",USER_DATA)
   const sendData=()=>{
     let data={
-      email:email,
+      email:detail?.email,
       data:USER_DATA?.data
 
     }

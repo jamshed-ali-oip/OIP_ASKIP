@@ -1,8 +1,8 @@
-import React from 'react';
-import {Dimensions, Image} from 'react-native';
-import {View, Text} from 'react-native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, Image, StatusBar } from 'react-native';
+import { View, Text } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   AnimatedTabBarNavigator,
   TabButtonLayout,
@@ -13,46 +13,72 @@ import WalletScreens from '../../screens/Walletscreens';
 import ProfileScreens from '../../screens/ProfileScreens';
 import Colors from '../../assets/colors/Colors';
 import Connexion from '../../screens/ProfileScreens/Connexion';
-import {Svg, Path} from 'react-native-svg';
-let {width, height} = Dimensions.get('window');
+import { Svg, Path } from 'react-native-svg';
+import { useDispatch, useSelector } from 'react-redux';
+import { Stackprofile } from '../../redux/actions/user.action';
+import deviceInfo from 'react-native-device-info'
+const tablet = deviceInfo.isTablet()
+let { width, height } = Dimensions.get('window');
 
 const Stack = createNativeStackNavigator();
-const HomeComponent = () => {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarHideOnKeyboard: true,
-      }}
-      initialRouteName="HomeScreens">
-      <Stack.Screen name="HomeScreens" component={HomeScreens} />
-      <Stack.Screen name="EventsScreens" component={EventsScreens} />
-      <Stack.Screen name="WalletScreens" component={WalletScreens} />
-      <Stack.Screen name="ProfileScreens" component={ProfileScreens} />
-   
-      
-      
-    </Stack.Navigator>
-  );
-};
-const AppNav = () => {
+
+// const HomeComponent = () => {
+//   const [ProfilStatus,setProfilStatus]=useState(false)
+//   const userId = useSelector((state) => state?.auth?.credential?.User?._id)
+//   useEffect(()=>{
+//     StackChanges()
+//   },[])
+//   const StackChanges = async () => {
+//     const { data } = await dispatch(Stackprofile(userId,setProfilStatus));
+//     console.log("============================================================")
+//     console.log("StackChanges",data)
+//     console.log("============================================================")
+
+//   }
+//   return (
+//     <Stack.Navigator
+//       screenOptions={{
+//         headerShown: false,
+//         tabBarHideOnKeyboard: true,
+//       }}
+//       initialRouteName="HomeScreens">
+//       <Stack.Screen name="HomeScreens" component={HomeScreens} />
+//       <Stack.Screen name="EventsScreens" component={EventsScreens} />
+//       <Stack.Screen name="WalletScreens" component={WalletScreens} />
+//       <Stack.Screen name="ProfileScreens" component={ProfileScreens} />
+
+
+
+//     </Stack.Navigator>
+//   );
+// };
+function TabBar() {
+
   const Tab = AnimatedTabBarNavigator();
   return (
     <Tab.Navigator
+
       initialRouteName="HomeScreens"
       tabBarOptions={{
         activeTintColor: 'white',
         inactiveTintColor: 'white',
         backgroundColor: 'blue',
+
+      tabStyle: tablet ? {height: 120, paddingBottom: 30} :{}
+
+
       }}
+      
       appearance={{
         activeTabBackgrounds: '#b3baca',
         tabBarBackground: Colors.theme_color,
         dotCornerRadius: width * 0.035,
+        
       }}>
+
       <Tab.Screen
         name="HomeScreens"
-        component={HomeComponent}
+        component={HomeScreens}
         options={{
           tabBarActiveTintColor: '#e73d34',
           tabBarInactiveTintColor: 'red',
@@ -61,7 +87,7 @@ const AppNav = () => {
           headerShown: false,
           tabBarLabel: 'Accueil',
 
-          tabBarIcon: ({focused, color, size}) => (
+          tabBarIcon: ({ focused, color, size }) => (
             <Svg
               xmlns="http://www.w3.org/2000/svg"
               width="23"
@@ -85,7 +111,7 @@ const AppNav = () => {
           tabBarInactiveTintColor: 'black',
           headerShown: false,
           tabBarLabel: 'Événements',
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             // <Image
             //   style={{
             //     height: height * 0.04,
@@ -113,11 +139,11 @@ const AppNav = () => {
         name="WalletScreens"
         component={WalletScreens}
         options={{
-          tabBarLabel: 'Wallet',
+          tabBarLabel: 'Rendez-vous',
           tabBarActiveTintColor: '#e73d34',
           tabBarInactiveTintColor: 'black',
           headerShown: false,
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             // <Image
             //   style={{
             //     height: height * 0.04,
@@ -149,7 +175,7 @@ const AppNav = () => {
           tabBarActiveTintColor: 'green',
           tabBarInactiveTintColor: 'black',
           headerShown: false,
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             // <Image
             //   style={{
             //     height: height * 0.04,
@@ -180,4 +206,5 @@ const AppNav = () => {
     </Tab.Navigator>
   );
 };
-export default AppNav;
+
+export default TabBar;

@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text} from 'react-native';
+import {View, Text, StatusBar} from 'react-native';
 import AuthScreens from '../../screens/AuthScreens';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -13,6 +13,7 @@ const AuthNav = () => {
         headerShown: false,
       }}
       initialRouteName="Selectscreen">
+
       <Stack.Screen name="Selectscreen" component={Selectscreen} />
       <Stack.Screen name="Forget" component={Forget} />
 

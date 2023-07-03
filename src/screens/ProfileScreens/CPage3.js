@@ -19,12 +19,12 @@ const CPage3 = ({ Data,setPage,Page }) => {
   const [email, setemail] = useState(null)
   const [phone, setphone] = useState(null)
   const sendCode=()=>{
-    console.log("set page",setPage)
+    // console.log("set page",setPage)
  let data={
   phone:phone?.slice(1),
   email:email,
  }
- console.log(data,"PHONE DATA")
+//  console.log(data,"PHONE DATA")
  dispatch(forget_Inner_Password(data,setPage))
   }
 

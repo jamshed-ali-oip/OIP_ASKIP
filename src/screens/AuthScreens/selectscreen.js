@@ -8,7 +8,9 @@ import {
   ImageBackground,
   Modal,
   ActivityIndicator,
-  Linking
+  Linking,
+  Platform,
+  FlatList
 } from 'react-native';
 import { React, useRef, useState, useEffect } from 'react';
 import { Loginbtn, SignupBtn, Connnection } from '../../components/BTNS';
@@ -26,6 +28,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import MaskInput from 'react-native-mask-input';
 import Inputs from '../../components/Inputs';
+import axios from 'axios';
 const { height, width } = Dimensions.get('window');
 
 const Selectscreen = ({ navigation }) => {
@@ -56,6 +59,17 @@ const Selectscreen = ({ navigation }) => {
   const [Verifyemail, setVerifyemail] = useState("")
   const [color, setcolor] = useState(false)
   const [color2, setcolor2] = useState(false)
+  const [Reminder, setReminder] = useState(false);
+  const [location, setlocation] = useState();
+  const [loc, setloc] = useState();
+  const [myloc, setmyloc] = useState();
+
+
+  useEffect(() => {
+    if (phoneNumber) {
+      setPhone(phoneNumber)
+    }
+  }, [phone, phoneNumber])
   const data2 = [
     {
       type: 'email',
@@ -68,7 +82,7 @@ const Selectscreen = ({ navigation }) => {
       id: 2,
     },
   ];
-
+  // console.log("location", location)
   const data = [
     {
       name: 'Lyon',
@@ -80,16 +94,17 @@ const Selectscreen = ({ navigation }) => {
     },
   ];
 
-  useEffect(()=>{
-    if( password?.length==0||phone?.length==0 ){
+  useEffect(() => {
+
+    if (password?.length === 0 || phone?.length === 0) {
       setcolor(false)
-    }else{setcolor(true)}
-  },[phone,password])
-  useEffect(()=>{
-    if(firstName?.length==0 ||lastName?.length==0||phoneNumber?.length==0){
+    } else if (password === undefined || phone === undefined) { setcolor(false) } else { setcolor(true) }
+  }, [phone, password])
+  useEffect(() => {
+    if (firstName?.length == 0 || lastName?.length == 0 || phoneNumber?.length == 0) {
       setcolor2(false)
-    }else{setcolor2(true)}
-  },[firstName,lastName,phoneNumber])
+    } else if (firstName == undefined || lastName == undefined || phoneNumber == undefined) { setcolor2(false) } else { setcolor2(true) }
+  }, [firstName, lastName, phoneNumber])
   const dispatch = useDispatch();
 
   const [loading, setLoading] = useState(false);
@@ -99,13 +114,14 @@ const Selectscreen = ({ navigation }) => {
       phone: phone?.replace(/ /g, '').slice(1),
       password,
     };
-    if(data.phone==undefined||data.password==undefined) {
+    // console.log(data)
+    if (data.phone == undefined || data.password == undefined) {
       setError(true)
-     }else{
-       console.log("hhda",data)
-       dispatch(userLogin(data, setLoading, setError));
-     }
- 
+    } else {
+      // console.log("hhda", data)
+      dispatch(userLogin(data, setLoading, setError, refRBSheet));
+    }
+
   };
 
   const registerUser_hit = () => {
@@ -113,31 +129,33 @@ const Selectscreen = ({ navigation }) => {
     let data = {
       firstName: firstName,
       lastName: lastName,
-      // email: Verifyemail || null,
-      phone: phoneNumber?.slice(1) || null
+      phone: phoneNumber?.replace(/ /g, '').slice(1),
+      location: location,
+      region: myloc?.context,
+      zipCode: myloc?.postcode
     };
-    console.log(data)
-    if (data.firstName===undefined||data.lastName===undefined||data.phone===undefined){
-    setError2(true)
+    // console.log("================================",data)
+    if (data.firstName === undefined || data.lastName === undefined || data.phone === undefined) {
+      setError2(true)
 
-  }else{
-   dispatch(registerUser(data, setLoading2, setError2, refRBSheet, refRBSheet2))
-    setError2(false)
-   }
-   
+    } else {
+      dispatch(registerUser(data, setLoading2, setError2, refRBSheet, refRBSheet2, setReminder))
+      setError2(false)
+    }
+
   };
   const Ottp_Code = () => {
     let data = {
       email: Verifyemail || null,
       phone: number.slice(1) || null
     };
-    console.log(data)
+    // console.log(data)
     dispatch(forget_Password(data, setM2, setM3));
   };
 
   const confirmOtpData_email = useSelector(state => state?.auth?.credential?.email);
   const confirmOtpData_phone = useSelector(state => state?.auth?.credential?.phone);
-  console.log(confirmOtpData_email, confirmOtpData_phone, "confirmOtpData");
+  // console.log(confirmOtpData_email, confirmOtpData_phone, "confirmOtpData");
 
   const userConfirmation = () => {
     let userVerify = {
@@ -155,12 +173,63 @@ const Selectscreen = ({ navigation }) => {
       newPassword: newPassword,
       confirmPassword: confirmPassword,
     };
-    console.log('------------------------', data);
+    // console.log('------------------------', data);
     dispatch(password_Reset(data, refRBSheet3));
   };
+  const MYdata = (item) => {
+    const handle = () => {
+      setmyloc(item?.item?.properties);
+      setlocation(item?.item?.properties?.city)
+    }
+    return (
+      <TouchableOpacity
+        onPress={() => handle()}
+      >
+        <Text
+          style={{
+            // backgroundColor:"red",
+            color: "#a3a3a3",
+            width: width * 0.78,
+            alignSelf: "center",
+            borderWidth: 1,
+            height: height * 0.038,
+            paddingLeft: width * 0.03,
+            textAlignVertical: "center",
+            borderColor: "#a3a3a3"
+
+          }}
+        >
+
+          {item?.item?.properties?.city}
+        </Text>
+      </TouchableOpacity>
+    )
+  }
+  // console.log("locatiomn", myloc)
+  useEffect(() => {
+    fetchhData()
+    // setmyloc()
+  }, [location])
+
+  const fetchhData = async () => {
 
 
+    try {
+      const data = await axios.get(`https://api-adresse.data.gouv.fr/search/?q=${location}&type=municipality&autocomplete=1`, {
+        headers: {
+          "accept": "application/json, text/plain"
+        }
+      })
+      // console.log("dsakjgk", data)
 
+      setloc(data?.data?.features)
+
+    }
+    catch (error) {
+      // console.log("", error)
+    }
+  }
+  // console.log("loc", loc)
   return (
     <View style={style.container}>
       <ImageBackground
@@ -198,6 +267,7 @@ const Selectscreen = ({ navigation }) => {
             }}
             title="Se créer un compte"
           />
+
         </View>
       </ImageBackground>
 
@@ -251,6 +321,9 @@ const Selectscreen = ({ navigation }) => {
               </Text>
             </View>
           ) : null}
+          <Text
+            style={style.tage}
+          >Numéro de téléphone</Text>
 
           <View
             style={{
@@ -267,24 +340,29 @@ const Selectscreen = ({ navigation }) => {
               value={phone}
               placeholder="06.06.06.06.06"
               placeholderTextColor="#afafaf"
-              style={{color:"black"}}
+              style={{ color: "black", height: height * 0.065,width:width*0.73 }}
               onChangeText={(masked, unmasked) => {
                 setPhone(masked);
               }}
-              maxLength={12}
+              maxLength={18}
               keyboardType="numeric"
               mask={[
                 /\d/,
                 /\d/,
                 ' ',
                 ' ',
-
                 /\d/,
                 /\d/,
+                ' ',
+                ' ',
                 /\d/,
                 /\d/,
+                ' ',
+                ' ',
                 /\d/,
                 /\d/,
+                ' ',
+                ' ',
                 /\d/,
                 /\d/,
               ]}
@@ -317,7 +395,10 @@ const Selectscreen = ({ navigation }) => {
           <TouchableOpacity
             onPress={() => {
               // navigation.navigate('Forget');
-              setForget(true);
+              refRBSheet.current.close();
+              setTimeout(() => {
+                setForget(true);
+              }, 200)
             }}>
             <Text style={style.forget}>
               Mot de passe oublié ? Je le réinitialise
@@ -357,7 +438,7 @@ const Selectscreen = ({ navigation }) => {
           </View>
 
           <Connnection
-          color={color==false?Colors.grey:Colors.ButtonBorder}
+            color={color == false ? Colors.grey : Colors.ButtonBorder}
             title={
               loading ? (
                 <ActivityIndicator color="white" size="small" />
@@ -371,10 +452,32 @@ const Selectscreen = ({ navigation }) => {
           <SignupBtn
             link={() => {
               refRBSheet.current.close();
-              refRBSheet2.current.open();
+              setTimeout(() => {
+                refRBSheet2.current.open();
+              }, 200)
             }}
             title="Se créer un compte"
           />
+          <TouchableOpacity
+            onPress={() => { Linking.openURL('https://askip-app.fr/mentions-legales') }}
+            style={{
+              // backgroundColor:"red",
+              width: width * 0.5,
+              alignSelf: "center",
+              alignItems: "center",
+              marginTop: height * 0.025
+            }}
+          >
+            <Text
+              style={{
+                textDecorationLine: "underline",
+                textDecorationColor: "black",
+                fontFamily: 'Bebas Neue Pro Regular',
+                color: "black",
+                fontSize: width * 0.038
+              }}
+            >Mentions légales</Text>
+          </TouchableOpacity>
         </View>
       </RBSheet>
 
@@ -442,7 +545,7 @@ const Selectscreen = ({ navigation }) => {
 
                 <View style={{ marginTop: height * 0.12 }}>
                   <Connnection
-                  color="#afafaf"
+                    color="#afafaf"
                     link={() => userConfirmation()}
                     title="Créer mon compte"
                   />
@@ -487,7 +590,7 @@ const Selectscreen = ({ navigation }) => {
           container: {
             borderTopEndRadius: width * 0.055,
             borderTopStartRadius: width * 0.055,
-            height: height * 0.8,
+            height: height * 0.86,
             backgroundColor: 'transparent',
           },
           wrapper: {
@@ -519,28 +622,89 @@ const Selectscreen = ({ navigation }) => {
             </Text> : null
           }
           <Forminput
-            value={firstName}
-            setvalue={setFirstName}
+            value={lastName}
+            setvalue={setlastName}
             title="Nom*"
             placeholder="Durant"
           />
           <View>
             <Forminput
-              value={lastName}
-              setvalue={setlastName}
+
+              value={firstName}
+              setvalue={setFirstName}
               title="Prénom*"
               placeholder="Laurent"
             />
           </View>
-          <Forminput
+          <Text
+            style={style.tage}
+          >Numéro de téléphone*</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              borderWidth: 1,
+              borderColor: '#606469',
+              width: width * 0.78,
+              alignItems: 'center',
+              alignSelf: 'center',
+              borderRadius: width * 0.01,
+              paddingLeft: width * 0.04,
+            }}>
+            <MaskInput
+              value={phoneNumber}
+              placeholder="06.06.06.06.06"
+              placeholderTextColor="#afafaf"
+              style={{ color: "black", height: height * 0.065,width:width*0.734 }}
+              onChangeText={(masked, unmasked) => {
+                setphoneNumber(masked);
+              }}
+              maxLength={18}
+              keyboardType="numeric"
+              mask={[
+                /\d/,
+                /\d/,
+                ' ',
+                ' ',
+                /\d/,
+                /\d/,
+                ' ',
+                ' ',
+                /\d/,
+                /\d/,
+                ' ',
+                ' ',
+                /\d/,
+                /\d/,
+                ' ',
+                ' ',
+                /\d/,
+                /\d/,
+              ]}
+            />
+          </View>
+          {/* <Forminput
             value={phoneNumber}
             setvalue={setphoneNumber}
             type="numeric"
             title="Numéro de téléphone*"
             placeholder="00.00.06.06.06"
             maxletter={10}
+          /> */}
+          <Forminput
+            value={location}
+            setvalue={setlocation}
+            title="Localisation*"
+            placeholder="Renseigne ta ville"
+          // maxletter={10}
           />
-
+          <View>
+            <FlatList
+              showsHorizontalScrollIndicator={false}
+              data={loc}
+              keyExtractor={item => item.id}
+              renderItem={MYdata}
+            />
+          </View>
           <View
             style={{
               // flexDirection: 'row',
@@ -548,54 +712,15 @@ const Selectscreen = ({ navigation }) => {
               marginTop: height * 0.02,
               // alignItems: 'center',
             }}>
-            <Text
+            {/* <Text
               style={{
                 fontFamily: 'Bebas Neue Pro Bold',
                 fontSize: width * 0.045,
                 color: 'black',
               }}>
               Localisation*
-            </Text>
-            {data.map(item => {
-              return (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    marginVertical: height * 0.005,
-                  }}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setRP(item);
-                    }}>
-                    <Image
-                      style={{
-                        resizeMode: 'contain',
-                      }}
-                      source={
-                        RP.id == item.id
-                          ? require('../../assets/images/tick.png')
-                          : require('../../assets/images/round.png')
-                      }
-                    />
-                  </TouchableOpacity>
-                  <Text
-                    style={{
-                      marginLeft: width * 0.02,
-                      // fontSize: width * 0.037,
-                      // fontWeight: 'bold',
-                      color: 'black',
-                      fontFamily:
-                        RP.id == item.id
-                          ? 'Bebas Neue Pro Bold'
-                          : 'Bebas Neue Pro Regular',
-                      fontSize: width * 0.043,
-                      letterSpacing: 0.25,
-                    }}>
-                    {item.name}
-                  </Text>
-                </View>
-              );
-            })}
+            </Text> */}
+
             <View
               style={{
                 flexDirection: 'row',
@@ -616,48 +741,61 @@ const Selectscreen = ({ navigation }) => {
                   }
                 />
               </TouchableOpacity>
-              <Text
-                style={{
-                  marginLeft: width * 0.02,
-                  // fontSize: width * 0.037,
-                  // fontWeight: 'bold',
-                  color: 'black',
+              <View>
+                <Text
+                  style={{
+                    marginLeft: width * 0.02,
+
+                    color: 'black',
+                    fontFamily: 'Bebas Neue Pro Regular',
+                    fontSize: width * 0.043,
+                    letterSpacing: 0.25,
+
+                  }}>
+                  {/* {item.name} */}
+                  En cliquant ici, tu acceptes les{' '}
+
+
+
+                </Text>
+                <TouchableOpacity
+
+                  onPress={() => { Linking.openURL('https://askip-app.fr/conditions-generales-utilisations') }}
+                >
+                  <Text style={{
+                    textDecorationLine: 'underline',
+                    color: "black",
+                    fontFamily: 'Bebas Neue Pro Regular',
+                    fontSize: width * 0.043,
+                    letterSpacing: 0.25,
+                    marginLeft:width*0.02
+                  }}>
+                    d'utilisation
+                  </Text></TouchableOpacity>
+              </View>
+              <TouchableOpacity
+
+                onPress={() => { Linking.openURL('https://askip-app.fr/conditions-generales-utilisations') }}
+              >
+                <Text style={{
+                  textDecorationLine: 'underline',
+                  color: "black",
                   fontFamily: 'Bebas Neue Pro Regular',
                   fontSize: width * 0.043,
                   letterSpacing: 0.25,
+                  // marginTop:height*0.025
                 }}>
-                {/* {item.name} */}
-                En cliquant ici, tu acceptes les{' '}
-                <TouchableOpacity
-                onPress={()=>{Linking.openURL('https://askip-app.fr/conditions-generales-utilisations')}}
-                >
-                  <Text style={{ 
-                    textDecorationLine: 'underline',
-                    color:"black",
-                    fontFamily: 'Bebas Neue Pro Regular', 
-                    fontSize: width * 0.043,
-                    letterSpacing: 0.25,
-                 }}>
-                  Conditions d’utilisation
-                </Text></TouchableOpacity>
-
-                , la
-                <Text style={{ textDecorationLine: 'underline' }}>
-                  {' '}
-                  Politique de confidentialité
-                </Text>{' '}
-                et la{' '}
-                <Text style={{ textDecorationLine: 'underline' }}>
-                  Politique relative aux cookies.*
+                  Conditions générales
+                  {/* d'utilisation */}
                 </Text>
-              </Text>
+              </TouchableOpacity>
             </View>
-            <Image
-              style={{ resizeMode: 'contain', marginTop: -height * 0.05 }}
+            {/* <Image
+              style={{ resizeMode: 'contain', marginTop: -height * 0.036, height: height * 0.032 }}
               source={require('../../assets/images/twist.png')}
-            />
+            /> */}
           </View>
-          <Connnection color={color2==false?Colors.grey:Colors.ButtonBorder} link={() => registerUser_hit()}
+          <Connnection color={color2 == false ? Colors.grey : Colors.ButtonBorder} link={() => registerUser_hit()}
 
             title={
               loading2 ? (
@@ -671,10 +809,32 @@ const Selectscreen = ({ navigation }) => {
           <SignupBtn
             link={() => {
               refRBSheet2.current.close();
-              refRBSheet.current.open();
+              setTimeout(() => {
+                refRBSheet.current.open();
+              }, 200);
             }}
             title="Se connecter"
           />
+          <TouchableOpacity
+            onPress={() => { Linking.openURL('https://askip-app.fr/mentions-legales') }}
+            style={{
+              // backgroundColor:"red",
+              width: width * 0.5,
+              alignSelf: "center",
+              alignItems: "center",
+              marginTop: height * 0.025
+            }}
+          >
+            <Text
+              style={{
+                textDecorationLine: "underline",
+                textDecorationColor: "black",
+                fontFamily: 'Bebas Neue Pro Regular',
+                color: "black",
+                fontSize: width * 0.038
+              }}
+            >Mentions légales</Text>
+          </TouchableOpacity>
         </View>
       </RBSheet>
       <>
@@ -798,6 +958,8 @@ const Selectscreen = ({ navigation }) => {
                     <Inputs
                       width={width * 0.6}
                       widths={width * 0.6}
+                      height={height * 0.065}
+                      heights={height * 0.065}
                       setvalue={setVerifyemail}
                       value={Verifyemail}
                       placeholder="e-mail"
@@ -808,6 +970,8 @@ const Selectscreen = ({ navigation }) => {
                       widths={width * 0.6}
                       setvalue={setnumber}
                       value={number}
+                      height={height * 0.065}
+                      heights={height * 0.065}
                       placeholder="numéro de téléphone"
                       type="numeric"
                       maxletter={10}
@@ -849,7 +1013,9 @@ const Selectscreen = ({ navigation }) => {
                       setM2(false),
                       setM3(false),
                       setForget(false),
-                      refRBSheet3.current.open()
+                      setTimeout(() => {
+                        refRBSheet3.current.open()
+                      }, 200)
                     )}
                     style={[
                       style.Connnection,
@@ -862,6 +1028,49 @@ const Selectscreen = ({ navigation }) => {
             </View>
           </View>
         </Modal>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={Reminder}
+          onRequestClose={() => {
+            Alert.alert("Modal has been closed.");
+            setReminder(!Reminder);
+          }}
+        >
+          <View style={style.centeredView}>
+            <View style={style.rawBottomModalView}>
+              <ImageBackground
+                imageStyle={{ borderRadius: width * 0.08 }}
+                style={style.rawBottomModalImage}
+                source={require('../../assets/images/backgroundImage.png')}>
+
+                <>
+                  <Text style={style.modalText}>
+                    <Text style={{ fontFamily: 'Bebas Neue Pro Bold', fontSize: width * 0.048 }}> </Text>
+                    Vous recevrez sous peu un mot de passe à 4 chiffres sur votre téléphone
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      paddingHorizontal: width * 0.045,
+                      // alignItems:"center"
+                      justifyContent: "center"
+
+                    }}>
+                    <TouchableOpacity
+                      onPress={() => setReminder(!Reminder)}
+                      style={style.rawBottomButons}>
+                      <Text style={style.btn}>D'accord</Text>
+                    </TouchableOpacity>
+
+                  </View>
+                </>
+
+              </ImageBackground>
+            </View>
+          </View>
+        </Modal>
+
       </>
     </View>
   );
@@ -908,12 +1117,12 @@ const style = StyleSheet.create({
     position: 'absolute',
     // marginBottom:0,
     resizeMode: 'contain',
-    height: height * 0.3,
+    height: Platform.OS == "ios" ? height * 0.3 : height * 0.4,
     width: width * 1,
     marginTop: height * 0.7,
   },
   box: {
-    marginTop: height * 0.05,
+    marginTop: Platform.OS == "ios" ? height * 0.04 : height * 0.085,
   },
   head: {
     // fontSize: width * 0.055,
@@ -1002,7 +1211,7 @@ const style = StyleSheet.create({
   },
   Connnection: {
     height: height * 0.06,
-    width: width * 0.65,
+    width: width * 0.6,
     borderRadius: width * 0.02,
     // alignItems:"center",
     justifyContent: 'center',
@@ -1037,5 +1246,68 @@ const style = StyleSheet.create({
     color: Colors.ButtonBorder,
     fontFamily: 'Bebas Neue Pro Regular',
     fontSize: width * 0.045,
+  },
+  tage: {
+    marginLeft: width * 0.12,
+    marginTop: width * 0.012,
+    paddingBottom: height * 0.01,
+    color: "black",
+    fontWeight: "600",
+    // fontSize:width*0.035,
+    fontFamily: 'Bebas Neue Pro Bold',
+    fontSize: width * 0.0415,
+    // marginBottom:-height*0.01,
+
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // borderRadius: width * 0.08,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    // marginTop: 22
+  }, rawBottomModalView: {
+    width: width * 0.8,
+    height: height * 0.22,
+    borderRadius: width * 0.08,
+    alignContent: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    // marginTop: height * 0.3,
+    alignSelf: 'center',
+  }, rawBottomModalImage: {
+    width: width * 0.8,
+    height: height * 0.22,
+    // borderRadius: width * 0.08,
+    resizeMode: 'contain',
+  }, modalText: {
+    textAlign: 'center',
+    // fontSize: width * 0.045,
+    // fontWeight: '400',
+    color: '#081a4f',
+    marginTop: height * 0.02,
+    width: width * 0.65,
+    // paddingHorizontal: width * 0.045,
+    alignSelf: 'center',
+    textTransform: 'uppercase',
+    width: width * 0.7,
+    // letterSpacing: -1,
+    fontFamily: 'Bebas Neue Pro Regular',
+    fontSize: width * 0.045,
+  }, rawBottomButons: {
+    width: width * 0.22,
+    height: height * 0.065,
+    backgroundColor: '#081a4f',
+    marginTop: height * 0.025,
+    // marginLeft: width * 0.1,
+    borderRadius: width * 0.018,
+    // alignSelf: 'center',
+    justifyContent: 'center',
+    // padding:width*0.04
+  }, btn: {
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: '600',
+    fontSize: width * 0.04,
   },
 });

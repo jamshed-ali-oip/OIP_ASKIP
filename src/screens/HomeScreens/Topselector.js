@@ -11,15 +11,50 @@ import {
   Modal,
   Platform,
 } from 'react-native';
-import React, {useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
-const {width, height} = Dimensions.get('window');
-const Topselector = () => {
-  const [modalVisible, setModalVisible] = useState(false); 
-  const [modalVisible2, setModalVisible2] = useState(false); 
-  const firstName=useSelector(state => state?.auth?.User?.data?.firstName)
+import { useDispatch, useSelector } from 'react-redux';
+import { MESINVITES, StatusUpdate } from '../../redux/actions/user.action';
+import moment from 'moment/min/moment-with-locales'
+import { base_URL_IMAGE } from '../../config/config';
+const { width, height } = Dimensions.get('window');
+const Topselector = ({ }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible2, setModalVisible2] = useState(false);
+  const [S_event, setS_event] = useState()
+  const [Invitations, setInvitations] = useState();
+  const [Count, setCount] = useState();
+  const [Status, setStatus] = useState();
+  const [inviteId, setinviteId] = useState();
+  const [ScreenSplit, setScreenSplit] = useState(true);
+
+  const firstName = useSelector((state) => state?.auth?.credential?.User?.lastName)
+  const dispatch = useDispatch()
+  const userId = useSelector((state) => state?.auth?.credential?.User?._id)
+  useEffect(() => {
+    MESDATA()
+  }, [])
+  const MESDATA = async () => {
+    const { data } = await MESINVITES(userId);
+    setInvitations(data?.data?.invitation);
+    setCount(data?.data?.invitationCount)
+  };
+  //  console.log("firstName",firstName)
+
+  // console.log(Status,inviteId);
+
+  const update = () => {
+    var data = {
+      status: Status,
+      userId: userId
+
+    }
+    dispatch(StatusUpdate(data, inviteId)).then(() => {
+      MESDATA()
+    })
+  }
+
   const headerdata = [
     {
       id: 1,
@@ -28,197 +63,288 @@ const Topselector = () => {
     },
     {
       id: 2,
-      name: '"Les prochains événements',
+      name: 'Les prochains événements',
       notification: 2,
     },
     {
+
+
       id: 3,
       name: 'Mes événements favoris',
       notification: 0,
     },
   ];
   const Inivite = () => {
+    const INVITES = (item) => {
+      //  console.log(item.item)
+      return (
+        <View style={[styles.selectedView, { backgroundColor: item?.item?.status == "pending" ? '#001d4f' : "#ffffff", }]}>
+          <View style={styles.insideViewheading}>
+            <Text style={[styles.mainheading2, { color: item?.item?.status == "pending" ? "#ffffff" : '#001d4f' }]}>
+              {item?.item?.revelaturId?.firstName + " " + item?.item?.revelaturId?.lastName} t’invite à un événement ! {' '}
+            </Text>
+          </View>
+          <Text style={[styles.flatlistheading2, { color: item?.item?.status == "pending" ? '#ffbc15' : '#001d4f' }]}>
+            {item?.item?.eventId?.eventName + "-" + item?.item?.eventId?.city}
+          </Text>
+          <View
+            style={{ flexDirection: 'row', marginBottom: height * 0.015 }}>
+            <Text style={[styles.flatlistdescription2, { color: item?.item?.status == "pending" ? 'white' : '#ffbc15' }]}>
+              {item?.item?.eventId?.category}
+            </Text>
+            <Text
+              style={[
+                styles.flatlistdate2,
+                { color: item?.item?.status == "pending" ? '#ffbc15' : '#001d4f', fontFamily: 'Bebas Neue Pro Regular' },
+              ]}>
+              {moment(item?.item?.beginAt).locale('fr').format('ddd DD MMMM YYYY')}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity
+              onPress={() => { setS_event(item?.item), refRBSheet2.current.open() }}
+              style={[styles.yellowViewselected, { width: item?.item?.status == "pending" ? width * 0.31 : width * 0.45, }]}>
+              <Text style={styles.yellowText}>Je consulte la fiche </Text>
+            </TouchableOpacity>
+            {item?.item?.status == "accepted" ?
+              <TouchableOpacity
+              activeOpacity={100}
+              // onPress={() => { setStatus("accepted"), setinviteId(item?.item?._id), setModalVisible(true) }}
+                style={[
+                  styles.acceptViewselected,
+                  { marginLeft: width * 0.0085 },
+                ]}>
+                <Text style={styles.acceptText}>Accepte</Text>
+              </TouchableOpacity> : null
+            }
+            {
+              item?.item?.status == "declined" ? <TouchableOpacity
+              activeOpacity={100}
+                // onPress={() => { setStatus("declined"), setinviteId(item?.item?._id), setModalVisible2(true) }}
+                style={[
+                  styles.rejectViewselected,
+                  { marginLeft: width * 0.0085, borderColor: item?.item?.status == "pending" ? 'white' : 'red', },
+                ]}>
+                <Text style={[styles.rejectText, { color: item?.item?.status == "pending" ? 'white' : 'red' }]}>
+                 Refuse
+                </Text>
+              </TouchableOpacity> : null
+            }
+
+            {item?.item?.status == "pending" ? <>
+
+              <TouchableOpacity
+                onPress={() => { setStatus("accepted"), setinviteId(item?.item?._id), setModalVisible(true) }}
+                style={[
+                  styles.acceptViewselected,
+                  { marginLeft: width * 0.0085 },
+                ]}>
+                <Text style={styles.acceptText}>J’accepte</Text>
+              </TouchableOpacity>
+
+
+              <TouchableOpacity
+                onPress={() => { setStatus("declined"), setinviteId(item?.item?._id), setModalVisible2(true) }}
+                style={[
+                  styles.rejectViewselected,
+                  { marginLeft: width * 0.0085, borderColor: item?.item?.status == "pending" ? 'white' : 'red', },
+                ]}>
+                <Text style={[styles.rejectText, { color: item?.item?.status == "pending" ? 'white' : 'red' }]}>
+                  Je refuse
+                </Text>
+              </TouchableOpacity></> : null}
+
+          </View>
+        </View>
+      )
+    }
     return (
-      <ScrollView>
-        <TouchableOpacity activeOpacity={1}>
+      <>
+        <View
+          style={{ position: "absolute", zIndex: 9999 }}
+        >
+          <TouchableOpacity
+
+            onPress={() => {
+              refRBSheet.current.close();
+            }}>
+            <Image
+              style={styles.circle}
+              source={require('../../assets/images/prev.png')}
+            />
+          </TouchableOpacity>
+
+        </View>
+        <ScrollView
+
+        >
+
           <ImageBackground
-            imageStyle={{
-              borderTopRightRadius: width * 0.08,
-              borderTopLeftRadius: width * 0.08,
-            }}
+
             style={styles.background}
             source={require('../../assets/images/rbbg.png')}>
-            <View
-              style={{
-                width: width * 0.15,
-                height: height * 0.01,
-                backgroundColor: 'black',
-                borderRadius: width * 0.035,
-                alignSelf: 'center',
-                marginTop: height * 0.01,
-              }}></View>
-            <TouchableOpacity
-              onPress={() => {
-                refRBSheet.current.close();
-              }}>
-              <Image
-                style={styles.circle}
-                source={require('../../assets/images/prev.png')}
-              />
-            </TouchableOpacity>
             <Text style={styles.mainheading}>MES INVITATIONS</Text>
-            <View style={styles.selectedView}>
-              <View style={styles.insideViewheading}>
-                <Text style={[styles.mainheading2, {color: 'white'}]}>
-                  révélateur t’invite à un événement ! {' '}
-                </Text>
-              </View>
-              <Text style={[styles.flatlistheading2, {color: '#ffbc15'}]}>
-                Nom de l’événement - Lieu 
-              </Text>
-              <View
-                style={{flexDirection: 'row', marginBottom: height * 0.015}}>
-                <Text style={[styles.flatlistdescription2, {color: 'white'}]}>
-                  Catégorie de l’événement
-                </Text>
-                <Text
-                  style={[
-                    styles.flatlistdate2,
-                    {color: '#ffbc15', fontFamily: 'Bebas Neue Pro Regular'},
-                  ]}>
-                  Lun 23 Septembre{' '}
-                </Text>
-              </View>
-              <View style={{flexDirection: 'row'}}>
-                <TouchableOpacity style={styles.yellowViewselected}>
-                  <Text style={styles.yellowText}>Je consulte la fiche </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={()=> setModalVisible(true)}
-                  style={[
-                    styles.acceptViewselected,
-                    {marginLeft: width * 0.0085},
-                  ]}>
-                  <Text style={styles.acceptText}>J’accepte</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                onPress={()=> setModalVisible2(true)}
-                  style={[
-                    styles.rejectViewselected,
-                    {marginLeft: width * 0.0085},
-                  ]}>
-                  <Text style={[styles.rejectText, {color: 'white'}]}>
-                    Je refuse
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.simpleView}>
-              <View style={styles.insideViewheading}>
-                <Text style={styles.mainheading2}>
-                  révélateur t’invite à un événement ! {' '}
-                </Text>
-              </View>
-              <Text style={styles.flatlistheading2}>
-                Nom de l’événement - Lieu {' '}
-              </Text>
-              <View
-                style={{flexDirection: 'row', marginBottom: height * 0.0075}}>
-                <Text style={styles.flatlistdescription2}>
-                  Catégorie de l’événement
-                </Text>
-                <Text style={styles.flatlistdate2}>Lun 23 Septembre </Text>
-              </View>
-              <View style={{flexDirection: 'row'}}>
-                <TouchableOpacity style={styles.yellowView}>
-                  <Text style={styles.yellowText}>Je consulte la fiche </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.acceptView}>
-                  <Text style={styles.acceptText}>Accepté</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.simpleView}>
-              <View style={styles.insideViewheading}>
-                <Text style={styles.mainheading2}>
-                  révélateur t’invite à un événement ! {' '}
-                </Text>
-              </View>
-              <Text style={styles.flatlistheading2}>
-                Nom de l’événement - Lieu {' '}
-              </Text>
-              <View
-                style={{flexDirection: 'row', marginBottom: height * 0.0075}}>
-                <Text style={styles.flatlistdescription2}>
-                  Catégorie de l’événement
-                </Text>
-                <Text style={styles.flatlistdate2}>Lun 23 Septembre </Text>
-              </View>
-              <View style={{flexDirection: 'row'}}>
-                <TouchableOpacity style={styles.yellowView}>
-                  <Text style={styles.yellowText}>Je consulte la fiche </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.rejectView}>
-                  <Text style={styles.rejectText}>Refusé</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.simpleView}>
-              <View style={styles.insideViewheading}>
-                <Text style={styles.mainheading2}>
-                  révélateur t’invite à un événement ! {' '}
-                </Text>
-              </View>
-              <Text style={styles.flatlistheading2}>
-                Nom de l’événement - Lieu {' '}
-              </Text>
-              <View
-                style={{flexDirection: 'row', marginBottom: height * 0.0075}}>
-                <Text style={styles.flatlistdescription2}>
-                  Catégorie de l’événement
-                </Text>
-                <Text style={styles.flatlistdate2}>Lun 23 Septembre </Text>
-              </View>
-              <View style={{flexDirection: 'row'}}>
-                <TouchableOpacity style={styles.yellowView}>
-                  <Text style={styles.yellowText}>Je consulte la fiche </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.acceptView}>
-                  <Text style={styles.acceptText}>Accepté</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            {Invitations?.length !== 0 ? <FlatList
+              // showsHorizontalScrollIndicator={true}
+              style={{ marginTop: height * 0.02 }}
+              scrollEnabled={true}
+              data={Invitations}
+              keyExtractor={item => item._id}
+              renderItem={INVITES}
+            /> :
+              <Image
+                style={{
+                  resizeMode: "contain",
+                  alignSelf: "center",
+                  marginTop: height * 0.06
+                }}
+                source={require("../../assets/images/noinvites.png")} />
+
+            }
           </ImageBackground>
-        </TouchableOpacity>
-      </ScrollView>
+
+        </ScrollView></>
     );
   };
   const refRBSheet = useRef();
+  const refRBSheet2 = useRef();
+
   const header = (item, index) => {
     return (
-      <TouchableOpacity
-      style={{
-        height:height*0.05,
-        backgroundColor:"white",
-        marginHorizontal: width * 0.02,
-        justifyContent:"center",
-        borderRadius:width * 0.05,
-        paddingHorizontal:width*0.04,
-        elevation:10,
-        marginTop:height*0.02,
-        marginBottom:height*0.01
-      }}
-      >
-        <Text
-        style={{ 
-          fontSize: width * 0.049,
-          color: '#001d4f',
-           fontFamily: 'Bebas Neue Pro Bold',
- }}
+      <>
+        {
+          item?.item?.id == 1 && Count >0 ? (
+            <View
+            style={{
+              position: "absolute",
+              backgroundColor: "#ffbc15",
+              borderRadius: width * 0.05/2,
+              height: width * 0.05,
+              width: width * 0.05,
+              // alignSelf:"flex-end",
+              // marginBottom:height*0.1,
+              // padding:width*0.01,
+              marginLeft: width * 0.29,
+              marginBottom: -height * 0.05,
+              zIndex: 9999,
+              marginTop: height * 0.01,
+            }}
+            >
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: width * 0.035,
+                  fontWeight: "bold"
+                }}
+              >{Count}</Text>
+            </View>
+          ) : null
+
+        }
+        <TouchableOpacity
+          onPress={() => { item?.item?.id == 1 ? refRBSheet.current.open() : null, MESDATA() }}
+          style={{
+            height: height * 0.05,
+            backgroundColor: "white",
+            marginHorizontal: width * 0.02,
+            justifyContent: "center",
+            borderRadius: width * 0.05,
+            paddingHorizontal: width * 0.04,
+            elevation: 10,
+            marginTop: height * 0.02,
+            marginBottom: height * 0.01,
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: 5,
+            },
+            shadowOpacity: 0.34,
+            shadowRadius: 6.27,
+
+          }}
         >
-        {item.item.name}
-        </Text>
-      </TouchableOpacity>
+
+          <Text
+            style={{
+              fontSize: width * 0.049,
+              color: '#001d4f',
+              fontFamily: 'Bebas Neue Pro Bold',
+            }}
+          >
+            {item.item.name}
+          </Text>
+
+
+        </TouchableOpacity></>
+    );
+  };
+  const RawBottomSheet = () => {
+
+    return (
+      <View
+        style={{
+          backgroundColor: 'white',
+          height: height,
+          borderTopRightRadius: width * 0.035,
+          borderTopLeftRadius: width * 0.035,
+        }}>
+        <Image
+          style={[
+            styles.rawBottomImage,
+            {
+              borderTopLeftRadius: width * 0.035,
+              borderTopRightRadius: width * 0.035,
+            },
+          ]}
+          source={{
+            uri: `${base_URL_IMAGE + S_event?.eventId?.eventImage}`,
+          }}
+        />
+        <View
+          style={{
+            width: width * 0.15,
+            height: height * 0.01,
+            backgroundColor: 'white',
+            borderRadius: width * 0.035,
+            alignSelf: 'center',
+            marginTop: height * 0.01,
+            position: 'absolute',
+          }}></View>
+        <View style={styles.rawBottomFirstView}>
+          <Text style={styles.rawBottomTitle}>{S_event?.eventId?.eventName + " "}</Text>
+          <Text style={styles.rawBottomshortTitle}>avec{" " + S_event?.revelaturId?.firstName + " " + S_event?.revelaturId?.lastName}  </Text>
+        </View>
+        <View style={styles.rawBottomSecondView}>
+          <Text style={styles.rawBottomdescription}>{S_event?.eventId?.category}</Text>
+          <Text style={styles.rawBottomdateandtime}>
+            {moment(S_event?.eventId?.beginAt).locale('fr').format('llll')}
+            {/* de {S_event?.eventId?.startTime} à {S_event?.eventId?.endTime} */}
+          </Text>
+        </View>
+        <View style={styles.rawBottomThirdView}>
+          <Image
+            style={styles.rawBottomtinyImage}
+            source={require('../../assets/images/locLogo.png')}
+          />
+          <Text style={styles.rawBottomlocation}>
+            
+            {S_event?.eventId?.postalAddress},{S_event?.eventId?.city},{S_event?.eventId?.zipCode}
+          </Text>
+        </View>
+        <ScrollView showsVerticalScrollIndicator={true}>
+          <TouchableOpacity activeOpacity={1}>
+            <Text style={styles.rawBottomMainDescription}>
+              
+              {S_event?.eventId?.description}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+        {/* <TouchableOpacity
+          style={styles.rawBottomButon}
+          >
+          <Text style={styles.rawBottomButtonText}>Je m’inscris !</Text>
+        </TouchableOpacity> */}
+      </View>
     );
   };
   return (
@@ -233,11 +359,11 @@ const Topselector = () => {
       <RBSheet
         ref={refRBSheet}
         height={height * 1}
-        closeOnDragDown={true}
+        closeOnDragDown={false}
         closeOnPressMask={false}
         customStyles={{
           wrapper: {
-            backgroundColor: 'transparent',
+            backgroundColor: 'white',
             // borderTopLeftRadius:width*0.35,
             // borderTopRightRadius:width*0.35,
             // marginBottom: 25,
@@ -250,97 +376,124 @@ const Topselector = () => {
             // marginTop:60,
           },
           container: {
-            borderTopLeftRadius: width * 0.08,
-            borderTopRightRadius: width * 0.08,
+            // borderTopLeftRadius: width * 0.08,
+            // borderTopRightRadius: width * 0.08,
             position: 'absolute',
             backgroundColor: 'transparent',
           },
         }}>
         <Inivite />
       </RBSheet>
+      <RBSheet
+        ref={refRBSheet2}
+        height={height * 0.95}
+        closeOnDragDown={true}
+        closeOnPressMask={false}
+        // dragFromTopOnly={false}
+
+        customStyles={{
+          wrapper: {
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          },
+          draggableIcon: {
+            backgroundColor: 'transparent',
+            paddingHorizontal: 25,
+          },
+          container: {
+            borderTopLeftRadius: width * 0.08,
+            borderTopRightRadius: width * 0.08,
+            // position:'absolute',
+            backgroundColor: 'transparent',
+          },
+        }}>
+        <RawBottomSheet />
+      </RBSheet>
       <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(!modalVisible);
-          }}>
-          <View style={styles.centeredView}>
-            <View style={styles.ModalView}>
-              <ImageBackground
-                imageStyle={{borderRadius: width * 0.08}}
-                style={styles.ModalImage}
-                source={require('../../assets/images/backgroundImage.png')}>
-                <>
-                  <Text style={styles.modalText}>
-                    <Text style={{fontFamily:'Bebas Neue Pro Bold'}}> {firstName}, </Text>
-                    veux-tu vraiment
-                    t’inscrire à cet événement ?
-                  </Text>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      paddingHorizontal: width * 0.045,
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}>
+        <View style={styles.centeredView}>
+          <View style={styles.ModalView}>
+            <ImageBackground
+              imageStyle={{ borderRadius: width * 0.08 }}
+              style={styles.ModalImage}
+              source={require('../../assets/images/backgroundImage.png')}>
+              <>
+                <Text style={styles.modalText}>
+                  <Text style={{ fontFamily: 'Bebas Neue Pro Bold' }}> {firstName}, </Text>
+                  veux-tu vraiment
+                  t’inscrire à cet événement ?
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    paddingHorizontal: width * 0.045,
+                  }}>
+                  <TouchableOpacity
+                    onPress={() => { update(), setModalVisible(!modalVisible); }}
+                    style={styles.Butons}>
+
+                    <Text style={styles.btn}>Oui</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.Butons}
+                    onPress={() => {
+                      setModalVisible(!modalVisible);
                     }}>
-                    <TouchableOpacity
-                      style={styles.Butons}>
-                      <Text style={styles.btn}>Oui</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.Butons}
-                      onPress={() => {
-                        setModalVisible(!modalVisible);
-                      }}>
-                      <Text style={styles.btn}>Non</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              </ImageBackground>
-            </View>
+                    <Text style={styles.btn}>Non</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            </ImageBackground>
           </View>
-        </Modal>
+        </View>
+      </Modal>
       <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible2}
-          onRequestClose={() => {
-            setModalVisible2(!modalVisible2);
-          }}>
-          <View style={styles.centeredView}>
-            <View style={styles.ModalView}>
-              <ImageBackground
-                imageStyle={{borderRadius: width * 0.08}}
-                style={styles.ModalImage}
-                source={require('../../assets/images/Background2.png')}>
-                <>
-                  <Text style={[styles.modalText, {marginTop:height*0.015, marginBottom:-height*0.015,}]}>
-                    <Text style={{fontFamily:'Bebas Neue Pro Bold'}}> Prénom, </Text>
-                    veux-tu vraiment
-                    refuser l’invitation 
-                    à cet événement ?
-                  </Text>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      paddingHorizontal: width * 0.045,
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible2}
+        onRequestClose={() => {
+          setModalVisible2(!modalVisible2);
+        }}>
+        <View style={styles.centeredView}>
+          <View style={styles.ModalView}>
+            <ImageBackground
+              imageStyle={{ borderRadius: width * 0.08 }}
+              style={styles.ModalImage}
+              source={require('../../assets/images/Background2.png')}>
+              <>
+                <Text style={[styles.modalText, { marginTop: height * 0.015, marginBottom: -height * 0.015, }]}>
+                  <Text style={{ fontFamily: 'Bebas Neue Pro Bold' }}> {firstName}, </Text>
+                  veux-tu vraiment
+                  refuser l’invitation
+                  à cet événement ?
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    paddingHorizontal: width * 0.045,
+                  }}>
+                  <TouchableOpacity
+                    onPress={() => { update(), setModalVisible2(!setModalVisible2) }}
+                    style={styles.Butons}>
+                    <Text style={styles.btn}>Oui</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.Butons}
+                    onPress={() => {
+                      setModalVisible2(!setModalVisible2);
                     }}>
-                    <TouchableOpacity
-                      style={styles.Butons}>
-                      <Text style={styles.btn}>Oui</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.Butons}
-                      onPress={() => {
-                        setModalVisible2(!setModalVisible2);
-                      }}>
-                      <Text style={styles.btn}>Non</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              </ImageBackground>
-            </View>
+                    <Text style={styles.btn}>Non</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            </ImageBackground>
           </View>
-        </Modal>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -388,12 +541,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
     fontSize: width * 0.04,
-    fontFamily:'Bebas Neue Pro Bold'
+    fontFamily: 'Bebas Neue Pro Bold'
   },
   modalText: {
     textAlign: 'center',
     fontSize: width * 0.055,
-    lineHeight:height*0.035,
+    lineHeight: height * 0.035,
     // fontWeight: '400',
     color: '#081a4f',
     marginTop: height * 0.03,
@@ -402,7 +555,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     width: width * 0.65,
     letterSpacing: 0.5,
-    fontFamily:'Bebas Neue Pro Regular'
+    fontFamily: 'Bebas Neue Pro Regular'
   },
   headerView: {
     // padding:width*0.02,
@@ -580,11 +733,11 @@ const styles = StyleSheet.create({
     paddingVertical: height * 0.0057,
   },
   circle: {
-    width: width * 0.115,
+    width: Platform.OS =="ios" ? width * 0.089:width * 0.11,
     height: height * 0.055,
     // backgroundColor: '#ffbc15',
     // borderRadius: width * 0.1,
-    marginTop: width * 0.037,
+    marginTop: Platform.OS =="ios" ? width * 0.1:width * 0.037,
     marginLeft: width * 0.027,
     resizeMode: 'contain',
   },
@@ -595,16 +748,17 @@ const styles = StyleSheet.create({
     marginLeft: width * 0.161,
     // fontWeight: 'bold',
     marginBottom: height * 0.045,
-    marginTop: height * 0.013,
+    marginTop: height * 0.1,
     fontFamily: 'Bebas Neue Pro Bold',
   },
   selectedView: {
     width: width * 0.8,
-    height: height * 0.215,
-    backgroundColor: '#001d4f',
+    height: height * 0.24,
     borderRadius: width * 0.06,
     alignSelf: 'center',
     elevation: 10,
+    marginVertical: height * 0.01,
+    paddingBottom: height * 0.015
   },
   simpleView: {
     width: width * 0.8,
@@ -644,7 +798,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   yellowViewselected: {
-    width: width * 0.3,
+
     height: height * 0.04,
     backgroundColor: '#ffbc15',
     borderRadius: width * 0.15,
@@ -667,7 +821,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.15,
     marginLeft: width * 0.03,
     borderWidth: 1,
-    borderColor: 'white',
+
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -723,7 +877,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffbc15',
     padding: width * 0.003,
     width: width * 0.055,
-    borderRadius:Platform.OS==='ios'?50:width*0.045,
+    borderRadius: Platform.OS === 'ios' ? 50 : width * 0.045,
     textAlign: 'center',
     fontSize: width * 0.035,
     fontWeight: '800',
@@ -731,5 +885,103 @@ const styles = StyleSheet.create({
     marginTop: height * 0.015,
     color: 'black',
     alignSelf: 'flex-end',
+  }, rawBottomImage: {
+    width: width * 1,
+    height: height * 0.4,
+  },
+  rawBottomTitle: {
+    // fontSize: width * 0.06,
+    color: '#081a4f',
+    // fontWeight: 'bold',
+    marginTop: height * 0.012,
+    fontFamily: 'Bebas Neue Pro Bold',
+    fontSize: width * 0.06,
+    // paddingHorizontal:width*0.017,
+    textAlign: 'center',
+    letterSpacing: 0.4,
+  },
+  rawBottomshortTitle: {
+    // fontSize: width * 0.05,
+    color: '#081a4f',
+    marginTop: 10,
+    // fontStyle: 'italic',
+    fontFamily: 'Bebas Neue Pro Italic',
+    fontSize: width * 0.058,
+  },
+  rawBottomFirstView: {
+    flexDirection: 'row',
+    // justifyContent:'space-around',
+    // paddingHorizontal: width*0.01,
+    // justifyContent: 'center',
+    marginLeft: width * 0.05,
+  },
+  rawBottomdescription: {
+    color: '#fdd76e',
+    // fontSize: width * 0.037,
+    fontSize: width * 0.048,
+    fontFamily: 'Bebas Neue Pro Regular',
+  },
+  rawBottomdateandtime: {
+    color: '#42547b',
+    fontSize: width * 0.04,
+    // paddingHorizontal: 3,
+    fontSize: width * 0.05,
+    fontFamily: 'Bebas Neue Pro Regular',
+    marginLeft: width * 0.012,
+  },
+  rawBottomSecondView: {
+    flexDirection: 'row',
+    marginLeft: width * 0.05,
+  },
+  rawBottomlocation: {
+    color: '#fdd460',
+    // fontSize: width * 0.045,
+    // fontWeight: 'bold',
+    // fontStyle: 'italic',
+    // paddingHorizontal: 10,
+    fontSize: width * 0.05,
+    fontFamily: 'Bebas Neue Pro Bold Italic',
+    marginLeft: width * 0.015,
+  },
+  rawBottomtinyImage: {
+    width: width * 0.05,
+    height: height * 0.03,
+    resizeMode: 'contain',
+  },
+  rawBottomThirdView: {
+    flexDirection: 'row',
+    // paddingHorizontal: 8,
+    marginVertical: height * 0.015,
+    marginLeft: width * 0.05,
+  },
+  rawBottomMainDescription: {
+    color: '#9f9f9f',
+    // paddingHorizontal: 8,
+    fontSize: width * 0.052,
+    fontFamily: 'Bebas Neue Pro Book',
+    marginLeft: width * 0.05,
+    letterSpacing: 0.25,
+    marginRight: width * 0.07,
+  },
+  rawBottomButon: {
+    backgroundColor: '#081a4f',
+    alignContent: 'center',
+    justifyContent: 'center',
+    width: width * 0.6,
+    borderRadius: width * 0.028,
+    alignSelf: 'center',
+    // margin: width * 0.22,
+    marginBottom: height * 0.115,
+    marginTop: height * 0.005,
+    height: height * 0.06,
+    // height:height*0.0,
+  },
+  rawBottomButtonText: {
+    color: 'white',
+    // padding: 14,
+    fontSize: width * 0.048,
+    letterSpacing: 0.15,
+    textAlign: 'center',
+    fontFamily: 'Bebas Neue Pro Bold',
   },
 });

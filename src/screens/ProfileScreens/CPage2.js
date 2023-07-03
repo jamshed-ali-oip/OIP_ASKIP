@@ -29,7 +29,7 @@ const handle=()=>{
   if(Data){
     // setSelect(Data);
     setPage(3)
-    console.log(Data,"PAGE NO")
+    // console.log(Data,"PAGE NO")
   }
 }
 

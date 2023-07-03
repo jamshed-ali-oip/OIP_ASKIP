@@ -83,6 +83,7 @@ const style = StyleSheet.create({
     justifyContent:"center",
     alignSelf:"center",
     marginTop:height * 0.015,
+    alignItems:'center'
     // borderWidth:1,
     
     // borderColor:Colors.ButtonBorder

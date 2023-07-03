@@ -1,20 +1,29 @@
 import {Dimensions, Image, Platform, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import React,{useState} from 'react';
+import React,{useState,useEffect} from 'react';
 import Forminput from '../../components/Forminput';
 import { useDispatch, useSelector } from 'react-redux';
-import { Download_verify } from '../../redux/actions/user.action';
+import { Download_verify, UserDetail } from '../../redux/actions/user.action';
 const {width, height} = Dimensions.get('window');
 
 const CPage8 = ({setPage}) => {
   const [password,setPassword]=useState()
   const [inco_Password,set_Inco_Password]=useState(false)
-  const email1=useSelector(state => state?.auth?.User?.data?.email)
-  const credentialemail=useSelector(state => state?.auth?.credential?.User?.email)
-  // const userData=useSelector(state => state?.auth?.User)
+  const [detail, setDetail] = useState()
+  const userId = useSelector((state) => state?.auth?.credential?.User?._id)
+  useEffect(() => {
+
+    UserInfo()
+
+  }, [])
+  const UserInfo = async () => {
+    const {data}  = await UserDetail(userId)
+    setDetail(data?.User)
+
+  }
   const dispatch=useDispatch()
   const Verify=()=>{
     let data={
-      email:email1||credentialemail,
+      email:detail?.email,
       password:password
     }
     if(data.email ==null || password ==undefined){

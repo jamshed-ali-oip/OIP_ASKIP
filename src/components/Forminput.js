@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     
   },
   input:{
-    width:width*0.68,
+    width:width*0.78,
     paddingLeft:width*0.04,
     color:"black"
   },

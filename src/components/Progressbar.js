@@ -1,32 +1,54 @@
 import { StyleSheet, Text, View, Dimensions, Platform } from 'react-native'
-import React from 'react'
+import React,{useState,useEffect} from 'react'
 import SimpleGradientProgressbarView from "react-native-simple-gradient-progressbar-view";
 import Colors from './Colors';
 import { useSelector } from 'react-redux';
-import { useEffect } from 'react';
+import { UserDetail } from '../redux/actions/user.action';
 const { height, width } = Dimensions.get('window');
 const Progressbar = (props) => {
-  //  const  ok=useSelector((state)=>state?.auth?.data)
+  const userId = useSelector((state) => state?.auth?.credential?.User?._id)
+  const [detail, setDetail] = useState()
+  useEffect(() => {
+    UserInfo()
+  }, [detail])
+  const UserInfo = async () => {
+    const { data } = await UserDetail(userId)
+    setDetail(data?.User?.progress)
+
+  }
+//  console.log("progress details",detail)
   const ok = useSelector(state => state?.auth?.progress)
   const percent = useSelector(state => state?.auth?.percent)
-  console.log(ok)
+  // console.log("ok",ok)
+  const yes =ok==undefined?detail:ok
 
-  console.log("mydata", ok)
-  // const screen1=ok?.firstName!==null?0.2:null;
-  // const screen2=ok?.email!==null?0.4:null;
-  // const screen3=ok?.kiffs!==null?0.6:null;
-  // const screen4=ok?.needSupport!==null?0.8:null;
-  // const screen5=ok?.identityCard!==null?1:null;
 
   return (
+<>
+<Text
+        style={{
+          fontSize: width * 0.037,
+          color: 'black',
+          // fontWeight: '700',
+          alignSelf: 'center',
+          // marginTop: height * 0.001,
+          fontFamily: 'Bebas Neue Pro Regular',
+          fontSize: width * 0.046,
+          letterSpacing: 0.3,
+        }}>{yes == 1 ? "TON PROFIL EST COMPLET !" : "TON PROFIL EST INCOMPLET !"}
+
+      </Text>
+      <View style={{ marginTop: height * 0.03 }}></View>
+    
     <View>
+   
       <View style={styles.container}>
 
         <SimpleGradientProgressbarView
           style={styles.box}
           toColor="#FFBC15"
           fromColor="#001D4F"
-          progress={ok}
+          progress={yes}
           maskedCorners={[1, 1, 1, 1]}
           cornerRadius={Platform.OS == 'ios' ? width * 0.03 : width * 0.045}
 
@@ -41,15 +63,14 @@ const Progressbar = (props) => {
           color: 'white',
           fontWeight: 'bold',
           fontSize: width * 0.035,
-          marginTop: -height * 0.012,
-          marginLeft:width * ok/1.5||0
+          top:-8,
+          // marginTop: -height * 0.012,
+          textAlign:'center',textAlignVertical:'center',
+          marginLeft: width * yes / 1.5 || 0
         }}
-      >{ok*100}</Text></View>
-    // width * 0.1
-    // width * 0.25 
-    // width * 0.4 
-    // width * 0.55 
-    // width * 0.7 
+      >{yes * 100}%</Text></View>
+      
+</>
   )
 }
 

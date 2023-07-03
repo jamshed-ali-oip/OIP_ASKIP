@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   Modal,
   ImageBackground,
+  StatusBar,
+  Platform
 } from 'react-native';
 import React, { useState, useRef, useEffect } from 'react';
 import RBSheet from 'react-native-raw-bottom-sheet';
@@ -18,68 +20,142 @@ import DatePicker from 'react-native-modern-datepicker';
 import { it } from 'node:test';
 import D_Apicker from './DatePicker';
 import Inputs from "../../components/Inputs"
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { ageVerification, ESPORTCHECK, getEvents, getEventsByID, ProfileChecking, Subscribe_Event, Un_Subscribe_Event, UserDetail } from '../../redux/actions/user.action';
+import { base_URL, base_URL_IMAGE } from '../../config/config';
+import moment from 'moment/min/moment-with-locales'
+import Colors from '../../components/Colors';
 
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 
-const EventsScreens = () => {
+const EventsScreens = ({ navigation }) => {
   const refRBSheet = useRef();
   const refRBSheet2 = useRef();
   const [data, setdata] = useState();
   const [data2, setdata2] = useState(1);
   const [input, SetInput] = useState('');
   const [ShowModal, SetShowModal] = useState(false);
+  const [mymodal, setmymodal] = useState(false);
+  const [kiffver, setkiffver] = useState(false);
+  const [unsubmodal, setunsubmodal] = useState(false);
   const [modalsec, Setmodalsec] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
-  const dekhnaData = useSelector((state)=>state)
-  console.log("dekhnaData",dekhnaData)
-  console.log('first', data2);
-  const Lowerdata = [
-    {
-      id: 1,
-      image:
-        'https://media.istockphoto.com/photos/esport-rgb-mouse-and-keyboard-picture-id1189620964?k=20&m=1189620964&s=612x612&w=0&h=cY-yQ88vKu0Vd8KPPdkUH4zcC8g90pTQdIlyHdL0HJ0=',
-      participants: ' 38 Participants',
-      title: ' NOM DE L’ÉVÉNEMENT',
-      description: ' setting  description ',
-      date: ' Lun 23 semptembre',
-      mainDescription:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras vel facilisis nunc. Nulla quis eros aliquet, condimentum erat quis, tincidunt ante. Vivamus faucibus vitae urna ut pellentesque. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut convallis eleifend nibh a rutrum. orem ipsum dolor sit amet, consectetur adipiscing elit. Cras vel facilisis nunc. Nulla quis eros aliquet, orem ipsum dolor sit amet, consectetur adipiscing elit. Cras vel facilisis nunc. Nulla quis eros aliquet,orem ipsum dolor sit amet, consectetur adipiscing elit. Cras vel facilisis nunc. Nulla quis eros aliquet,orem ipsum dolor sit amet, consectetur adipiscing elit. Cras vel facilisis nunc. Nulla quis eros aliquet',
-      Location: '90 Boulevard Marius Vivier Merle, 69003 LYON',
-      Dateandtime: '23/10/2022 de 1400 hours',
-      shortTitle: ' avec REVELATEU',
-    },
-    {
-      id: 2,
-      image:
-        'https://media.istockphoto.com/photos/esport-rgb-mouse-and-keyboard-picture-id1189620964?k=20&m=1189620964&s=612x612&w=0&h=cY-yQ88vKu0Vd8KPPdkUH4zcC8g90pTQdIlyHdL0HJ0=',
-      participants: ' 38 Participants',
-      title: ' title 2',
-      description: ' 123 description',
-      date: ' Lun 23 semptembre ',
-      mainDescription:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras vel facilisis nunc. Nulla quis eros aliquet, condimentum erat quis, tincidunt ante. Vivamus faucibus vitae urna ut pellentesque. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut convallis eleifend nibh a rutrum. ',
-      Location: 'NOM DE L’ÉVÉNEMENT ',
-      Dateandtime: '23/10/2022 de 1400 hours',
-      shortTitle: ' avec REVELATEU',
-    },
-    {
-      id: 3,
-      image:
-        'https://media.istockphoto.com/photos/esport-rgb-mouse-and-keyboard-picture-id1189620964?k=20&m=1189620964&s=612x612&w=0&h=cY-yQ88vKu0Vd8KPPdkUH4zcC8g90pTQdIlyHdL0HJ0=',
-      participants: ' 38 Participants',
-      title: ' title 3',
-      description: ' 123 description',
-      date: ' Lun 23 semptembre',
-      mainDescription:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras vel facilisis nunc. Nulla quis eros aliquet, condimentum erat quis, tincidunt ante. Vivamus faucibus vitae urna ut pellentesque. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut convallis eleifend nibh a rutrum. ',
-      Location: 'NOM DE L’ÉVÉNEMENT ',
-      Dateandtime: '23/10/2022 de 1400 hours',
-      shortTitle: ' avec REVELATEU',
-    },
-  ];
+  const [events, setEvents] = useState()
+  const [eventsDetail, setEventsDetail] = useState()
+  const [Power, setPower] = useState(false)
+  const [BTN, setBTN] = useState(false)
+  const [ageVer, setAgeVer] = useState()
+  const [detail, setDetail] = useState()
+  const [ECHECK, setECHECK] = useState()
+  
+  // console.log("umar ", ageVer)
+  const userId = useSelector((state) => state?.auth?.credential?.User?._id)
+  const Name = useSelector((state) => state?.auth?.credential?.User?.lastName)
+
+  useEffect(() => {
+    UserInfo()
+  }, [])
+  const UserInfo = async () => {
+    const { data } = await UserDetail(userId)
+    setDetail(data?.User)
+
+  }
+  // console.log("progress details", detail)
+  const DOB = useSelector((state) => state?.auth?.credential?.User?.birthDate)
+  const dispatch = useDispatch()
+  const Revelator = useSelector(state => state?.auth?.User?.relatedRevelateur)
+  const RID = useSelector(state => state?.auth?.credential?.User?.relatedRevelateur)
+  useEffect(() => {
+    event_by_Id()
+  }, [data])
+
+  useEffect(() => {
+    fetchData();
+  }, [])
+
+
+  const fetchData = async () => {
+    const { data } = await dispatch(getEvents());
+
+    setEvents(data)
+  };
+  // console.log("eventsss",events?.data?.length)
+  const Profile_Checking = async () => {
+    const { data } = await dispatch(ProfileChecking(userId, setPower, setBTN));
+
+  }
+  const Esport=async()=>{
+   
+    const  Mydata  = await ESPORTCHECK(userId) 
+    // console.log("bhai yahan bhi aja ",Mydata)
+    setECHECK(Mydata)
+    
+  }
+  // console.log("Poyon OIl",ECHECK)
+ 
+  const EKIFFCHECK=()=>{
+    if(ECHECK==true){
+      SubscribeEvent();
+      refRBSheet.current.close(),
+      setmymodal(false)
+    }else{
+      setTimeout(() => {
+        setkiffver(true)
+      }, 200)
+    
+      setmymodal(false)
+    }
+ }
+  const event_by_Id = async () => {
+
+    const EventByID = await getEventsByID(data)
+
+    setEventsDetail(EventByID)
+  }
+
+  const SubscribeEvent = () => {
+    dispatch(Subscribe_Event(data, userId)).then(() => {
+      fetchData()
+      event_by_Id()
+    })
+  }
+  const UnSubscribe = () => {
+    dispatch(Un_Subscribe_Event(data, userId)).then(() => {
+      fetchData()
+      event_by_Id()
+    })
+  }
+
+  const Age = async () => {
+    const { data } = await ageVerification(userId)
+    setAgeVer(data?.data?.eighteenAbove)
+  };
+
+  const AgeHandle = () => {
+    SubscribeEvent();
+    SetShowModal(false);
+    refRBSheet.current.close()
+    // if (ageVer === false) {
+    //   Setmodalsec(true)
+    // } else {
+    //   SubscribeEvent();
+    //   SetShowModal(false);
+    //   refRBSheet.current.close()
+    // }
+  }
+  const Okhandle = () => {
+    Setmodalsec(false);
+    SetShowModal(false);
+    refRBSheet.current.close();
+    SubscribeEvent();
+  }
+
+
+
+
+
   const localisationData = [
     {
       id: 1,
@@ -117,25 +193,7 @@ const EventsScreens = () => {
         <Text style={styles.rbdate}> Date </Text>
         <View style={styles.pickerview}>
           <D_Apicker />
-          {/* <DatePicker
-           isGregorian={true}
-            locale="fr-be"
-            
-            options={{
-              
-              backgroundColor: '#081a4f',
-              textHeaderColor: '#b3b3b3',
-              textDefaultColor: '#F6E7C1',
-              selectedTextColor: '#fff',
-              mainColor: '#F4722B',
-              textSecondaryColor: '#D6C7A1',
-              borderColor: 'rgba(122, 146, 165, 0.1)',
-              
-            }}
-            onSelectedChange={date => setSelectedDate(date)}
-            mode="calendar"
-            style={styles.datepicker}
-          /> */}
+
         </View>
         <Text style={styles.rbtext}> LOCALISATION</Text>
         <View
@@ -178,6 +236,20 @@ const EventsScreens = () => {
   };
 
   const RawBottomSheet = () => {
+    let a = (eventsDetail?.data?.data?.subscriptionIds)?.some((i) => i == userId);
+    let b = eventsDetail?.data?.data?.subsIdAdminAndRevelature?.filter((i) => i._id === Revelator || RID);
+    let c = b?.[0]?.firstName + " " + b?.[0]?.lastName
+    let d = null
+    if (eventsDetail?.data?.data?.subsIdAdminAndRevelature[0]?.firstName && eventsDetail?.data?.data?.subsIdAdminAndRevelature[0]?.lastName) {
+      d = eventsDetail?.data?.data?.subsIdAdminAndRevelature[0]?.firstName + " " + eventsDetail?.data?.data?.subsIdAdminAndRevelature[0]?.lastName
+    }
+
+    // console.log("eventsDetail?.data?.dataeventsDetail?.data?.dataeventsDetail?.data?.data")
+    // console.log(eventsDetail?.data?.data?.participationType[0]?.[0])
+    // console.log("eventsDetail?.data?.dataeventsDetail?.data?.dataeventsDetail?.data?.data")
+    const online = eventsDetail?.data?.data?.participationType[0]?.[0]?.distancielThumbnail
+    const offline = eventsDetail?.data?.data?.participationType[0]?.[0]?.presentielThumbnail
+    // console.log("detailss of the box", eventsDetail?.data)
     return (
       <View
         style={{
@@ -194,8 +266,22 @@ const EventsScreens = () => {
               borderTopRightRadius: width * 0.035,
             },
           ]}
-          source={{ uri: data.item.image }}
+          source={{ uri: `${base_URL_IMAGE + eventsDetail?.data?.data?.eventImage}` }}
         />
+
+        {
+          a == true ? <Image
+            style={{
+              resizeMode: "contain",
+              // position:"absolute"
+              marginTop: -height * 0.06,
+              height: height * 0.05,
+              width: width * 0.3
+
+            }}
+            source={require("../../assets/images/subcribe.png")}
+          /> : null
+        }
         <View
           style={{
             width: width * 0.15,
@@ -207,15 +293,27 @@ const EventsScreens = () => {
             position: 'absolute',
           }}></View>
         <View style={styles.rawBottomFirstView}>
-          <Text style={styles.rawBottomTitle}>{data.item.title}</Text>
-          <Text style={styles.rawBottomshortTitle}>{data.item.shortTitle}</Text>
+          <Text style={styles.rawBottomTitle}>
+            {eventsDetail?.data?.data?.eventName}  {''}
+
+          </Text>
+          {
+            d != null ?
+              <Text style={styles.rawBottomshortTitle}>
+
+                avec {d}
+              </Text> : null
+          }
+
         </View>
         <View style={styles.rawBottomSecondView}>
           <Text style={styles.rawBottomdescription}>
-            {data.item.description}
+
+            {eventsDetail?.data?.data?.category}
           </Text>
           <Text style={styles.rawBottomdateandtime}>
-            {data.item.Dateandtime}
+            {moment(eventsDetail?.data?.data?.beginAt).locale('fr').format('DD/MM/YYYY')} de {eventsDetail?.data?.data?.startTime} à {eventsDetail?.data?.data?.endTime}
+
           </Text>
         </View>
         <View style={styles.rawBottomThirdView}>
@@ -223,22 +321,96 @@ const EventsScreens = () => {
             style={styles.rawBottomtinyImage}
             source={require('../../assets/images/locLogo.png')}
           />
-          <Text style={styles.rawBottomlocation}>{data.item.Location}</Text>
+          <Text style={styles.rawBottomlocation}>
+
+            {online == true ? "En ligne " : null}{offline == true ? eventsDetail?.data?.data?.postalAddress + "," +" "+ eventsDetail?.data?.data?.city +" "+eventsDetail?.data?.data?.zipCode : null}
+          </Text>
         </View>
         <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
-          <TouchableOpacity activeOpacity={1}>
+          <TouchableOpacity
+          activeOpacity={100}
+            // onPress={() => setkiffver(true)}
+          >
             <Text style={styles.rawBottomMainDescription}>
-              {data.item.mainDescription}
+              {eventsDetail?.data?.data?.description}
             </Text>
           </TouchableOpacity>
         </ScrollView>
-        <TouchableOpacity
-          style={styles.rawBottomButon}
-          onPress={() => {
-            SetShowModal(true);
-          }}>
-          <Text style={styles.rawBottomButtonText}>Je m’inscris !</Text>
-        </TouchableOpacity>
+
+        {/* datoooo  */}
+
+
+        {/* hsatooo  */}
+        {
+          a == true ?
+            <TouchableOpacity
+              style={[styles.rawBottomButon, { backgroundColor: Colors.ButtonBorder }]}
+              onPress={() => {
+                setTimeout(() => {
+                  setunsubmodal(true)
+                }, 200)
+
+                UserInfo()
+              }
+              }>
+              <Text style={styles.rawBottomButtonText}>Je me désinscris !</Text>
+            </TouchableOpacity>
+            : <>
+              {BTN == false ? <TouchableOpacity
+                style={styles.rawBottomButon}
+                onPress={() =>
+                  Profile_Checking()
+                }>
+                <Text style={styles.rawBottomButtonText}>Je m’inscris !</Text>
+              </TouchableOpacity> : null}
+              {/* buttons  */}
+              {BTN == true ?
+                <View
+                  style={{ marginBottom: height * 0.1111, flexDirection: "row", justifyContent: "space-around" }}
+                >
+                  {offline == true ?
+                    <TouchableOpacity
+                      onPress={() => {
+                        // Age(),
+                        SetShowModal(true)
+                      }
+                      }
+                      style={{
+                        backgroundColor: "#081a4f",
+                        height: height * 0.05,
+                        justifyContent: "center",
+                        width: width * 0.42,
+                        borderRadius: width * 0.03
+                      }}
+                    >
+                      <Text style={styles.rawBottomButtonText}>Je participe en présentiel</Text>
+                    </TouchableOpacity> : null}
+                  {online == true ?
+                    <TouchableOpacity
+                      onPress={() => {
+                        Esport();
+                        setTimeout(()=>{
+                          setmymodal(true)
+                         
+                        },200)
+                        
+                      }}
+                      style={{
+                        backgroundColor: "#081a4f",
+                        height: height * 0.05,
+                        justifyContent: "center",
+                        width: width * 0.42,
+                        borderRadius: width * 0.03
+                      }}
+                    >
+                      <Text style={styles.rawBottomButtonText}>Je participe en ligne</Text>
+                    </TouchableOpacity> : null
+                  }
+
+                </View>
+                : null}
+            </>
+        }
         <Modal
           animationType="fade"
           transparent={true}
@@ -259,7 +431,7 @@ const EventsScreens = () => {
                 {modalsec == false ? (
                   <>
                     <Text style={styles.modalText}>
-                      <Text style={{ fontFamily: 'Bebas Neue Pro Bold', fontSize: width * 0.048 }}> Prénom, </Text>
+                      <Text style={{ fontFamily: 'Bebas Neue Pro Bold', fontSize: width * 0.048 }}> {detail?.lastName}, </Text>
                       veux-tu vraiment t’inscrire a cet événement en présentiel
                       ?
                     </Text>
@@ -270,7 +442,7 @@ const EventsScreens = () => {
                       }}>
                       <TouchableOpacity
                         onPress={() => {
-                          Setmodalsec(true);
+                          AgeHandle();
                         }}
                         style={styles.rawBottomButons}>
                         <Text style={styles.btn}>Oui</Text>
@@ -301,7 +473,7 @@ const EventsScreens = () => {
                         <Text> </Text>
                         <Text
                           style={[styles.scndmodaltext2, { fontFamily: 'Bebas Neue Pro Bold' }]}>
-                          prénom !
+                          {detail?.lastName} !
                         </Text>
                       </Text>
                     </View>
@@ -322,8 +494,7 @@ const EventsScreens = () => {
                     <TouchableOpacity
                       style={styles.scndmodalbtn}
                       onPress={() => {
-                        Setmodalsec(false);
-                        SetShowModal(false);
+                        Okhandle()
 
                       }}>
                       <Text
@@ -343,33 +514,194 @@ const EventsScreens = () => {
             </View>
           </View>
         </Modal>
+
+        {/* online //////////////////// */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={mymodal}
+          onRequestClose={() => {
+            setmymodal(!mymodal);
+          }}>
+          <View style={styles.centeredView}>
+            <View style={styles.rawBottomModalView}>
+              <ImageBackground
+                imageStyle={{ borderRadius: width * 0.08 }}
+                style={styles.rawBottomModalImage}
+                source={require('../../assets/images/backgroundImage.png')}>
+
+                <>
+                  <Text style={styles.modalText}>
+                    <Text style={{ fontFamily: 'Bebas Neue Pro Bold', fontSize: width * 0.048 }}> {detail?.lastName}, </Text>
+                    veux-tu vraiment
+                    t’inscrire a cet événement
+                    en LIGNE ?
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      paddingHorizontal: width * 0.045,
+                    }}>
+                    <TouchableOpacity
+                    onPress={()=>{EKIFFCHECK()}}
+                      // onPress={() => { SubscribeEvent(), setmymodal(false), refRBSheet.current.close() }}
+                      style={styles.rawBottomButons}>
+                      <Text style={styles.btn}>Oui</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.rawBottomButons}
+                      onPress={() => {
+                        setmymodal(false)
+                      }}>
+                      <Text style={styles.btn}>Non</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+
+              </ImageBackground>
+            </View>
+          </View>
+        </Modal>
+        {/* unsubscuribe modal  */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={unsubmodal}
+          onRequestClose={() => {
+            setunsubmodal(!unsubmodal);
+          }}>
+          <View style={styles.centeredView}>
+            <View style={styles.rawBottomModalView}>
+              <ImageBackground
+                imageStyle={{ borderRadius: width * 0.08 }}
+                style={styles.rawBottomModalImage}
+                source={require('../../assets/images/Background2.png')}>
+
+                <>
+                  <Text style={styles.modalText}>
+                    <Text style={{ fontFamily: 'Bebas Neue Pro Bold', fontSize: width * 0.048 }}> {detail?.lastName}, </Text>
+                    veux-tu vraiment
+                    te désinscrire de cet événement ?
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      paddingHorizontal: width * 0.045,
+                    }}>
+                    <TouchableOpacity
+                      onPress={() => { UnSubscribe(), setunsubmodal(false), refRBSheet.current.close() }}
+                      style={styles.rawBottomButons}>
+                      <Text style={styles.btn}>Oui</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.rawBottomButons}
+                      onPress={() => {
+                        setunsubmodal(false)
+                      }}>
+                      <Text style={styles.btn}>Non</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+
+              </ImageBackground>
+            </View>
+          </View>
+        </Modal>
+        {/* kiff errors  */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={kiffver}
+          onRequestClose={() => {
+            setkiffver(!kiffver)
+          }}>
+          <View style={styles.centeredView}>
+            <View style={styles.rawBottomModalView}>
+              <ImageBackground
+                imageStyle={{ borderRadius: width * 0.08 }}
+                style={styles.rawBottomModalImage}
+                source={require('../../assets/images/backgroundImage.png')}>
+
+                <>
+                  <Text style={styles.modalText}>
+                    {/* <Text style={{ fontFamily: 'Bebas Neue Pro Bold', fontSize: width * 0.048 }}> {detail?.lastName}, </Text> */}
+                    Pour t'inscrire à cet événement "E-sport",
+                    ajoute le kiff "E-sport" et renseigne ton pseudo discord.
+                  </Text>
+                  <View
+                    style={{
+                      // flexDirection: 'row',
+                      // paddingHorizontal: width * 0.045,
+                    }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                       
+                        navigation.navigate("ProfileScreens"),
+                       
+                        setTimeout(()=>{
+                          setkiffver(false),
+                          refRBSheet.current.close() 
+                        },200)
+                        //  refRBSheet.current.close() 
+                      }}
+                      style={{
+                        width: width * 0.25,
+                        height: height * 0.065,
+                        backgroundColor: '#081a4f',
+                        marginTop: height * 0.02,
+                        // marginLeft: width * 0.1,
+                        borderRadius: width * 0.018,
+                        alignSelf: 'center',
+                        justifyContent: 'center'
+                      }}>
+                      <Text style={styles.btn}>Je fonce !</Text>
+                    </TouchableOpacity>
+
+                  </View>
+                </>
+
+              </ImageBackground>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   };
 
+
   const LowerRender = item => {
+    let a = (item?.item?.subscriptionIds)?.some((i) => i == userId);
     return (
       <TouchableOpacity
+        activeOpacity={0.5}
+
         onPress={() => {
-          setdata(item), refRBSheet.current.open();
+          setdata(item?.item?._id)
+          // event_by_Id();
+          refRBSheet.current.open()
+
         }}>
         <ImageBackground
-          imageStyle={{ borderRadius: width * 0.06 }}
+          imageStyle={{ borderRadius: width * 0.04, borderWidth: 0.5, borderColor: '#b9b9b9' }}
           style={styles.LowerRenderimage}
-          source={{ uri: item.item.image }}>
+          source={{ uri: `${base_URL_IMAGE + item.item.eventImage}` }}>
           <View style={styles.LowerRenderfirstview}>
             <Text style={styles.participanttext}>
-              {' '}
-              {item.item.participants}{' '}
+              {item?.item?.subscriptionIds.length || 0} participants
             </Text>
           </View>
+          {
+            a == true ? <Image
+              style={{ alignSelf: "flex-end", height: height * 0.06, resizeMode: "contain", margin: width * 0.02 }}
+              source={require("../../assets/images/subcribe.png")} /> : null
+          }
           <View style={styles.LowerRendersecondview}>
-            <Text style={styles.flatlistheading}> {item.item.title} </Text>
-            <View style={{ flexDirection: 'row' }}>
+            <Text style={styles.flatlistheading} numberOfLines={1}>{item?.item?.eventName}-{item?.item?.city}.. </Text>
+            <View style={{ flexDirection: 'row', justifyContent: "space-between", paddingRight: width * 0.02, alignItems: "center" }}>
               <Text style={styles.flatlistdescription}>
-                {item.item.description}{' '}
+                {item?.item?.category}
               </Text>
-              <Text style={styles.flatlistdate}>{item.item.date} </Text>
+              <Text style={styles.flatlistdate}>{moment(item?.item?.beginAt).locale('fr').format('ddd DD MMMM ')} </Text>
             </View>
           </View>
         </ImageBackground>
@@ -401,131 +733,208 @@ const EventsScreens = () => {
   };
 
   return (
-    <SafeAreaView>
-      <View>
-        <ImageBackground
-          style={styles.upperViewMainImage}
-          source={require('../../assets/images/backgroundImage.png')}
-        >
-         
-        
-          <View
-            style={{
-              borderWidth: 2,
-              height: height * 0.05,
-              width: width * 0.8,
-              alignSelf: "center",
-              flexDirection: "row",
-              justifyContent: "space-around",
-              alignItems: "center",
-              borderRadius: width * 0.05,
-              marginTop: height * 0.05,
-              // backgroundColor:"red"
-              borderColor:"#081a4f"
+    <View style={{ backgroundColor: 'white' }}>
+      <StatusBar barStyle='default' backgroundColor='transparent' />
+      {Power == false ?
+        <>
+          <View>
+            <ImageBackground
+              style={styles.upperViewMainImage}
+              source={require('../../assets/images/backgroundImage.png')}
+            >
 
-            }}
-          >
-            <Image
-              style={styles.tinyimages}
-              source={require('../../assets/images/searchlogo.png')}
-            />
-            <TextInput
-              placeholder='Rechercher'
-              placeholderTextColor="#081a4f"
+
+              <View
+                style={{
+                  borderWidth: 2,
+                  height: height * 0.05,
+                  width: width * 0.8,
+                  alignSelf: "center",
+                  flexDirection: "row",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                  borderRadius: width * 0.05,
+                  marginTop: height * 0.06,
+                  // backgroundColor:"red"
+                  borderColor: "#081a4f"
+
+                }}
+              >
+                <Image
+                  style={styles.tinyimages}
+                  source={require('../../assets/images/searchlogo.png')}
+                />
+                <TextInput
+                  placeholder='Rechercher'
+                  placeholderTextColor="#081a4f"
+                  style={{
+                    // backgroundColor: "red", 
+                    height: height * 0.048,
+                    width: width * 0.58,
+                    alignSelf: "center"
+
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => { refRBSheet2.current.open() }}>
+                  <Image
+                    style={styles.tinyimages}
+                    source={require('../../assets/images/filterLogo.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+              <View style={{}}>
+                <FlatList
+                  showsHorizontalScrollIndicator={false}
+                  horizontal={true}
+                  data={Upperdata}
+                  keyExtractor={item => item.id}
+                  renderItem={UpperRender}
+                />
+              </View>
+            </ImageBackground>
+
+            <View
               style={{
-                // backgroundColor: "red", 
-                height: height * 0.048,
-                width: width * 0.58,
-                alignSelf: "center"
-
-              }}
-            />
-            <TouchableOpacity
-              onPress={() => { refRBSheet2.current.open() }}>
-              <Image
-                style={styles.tinyimages}
-                source={require('../../assets/images/filterLogo.png')}
-              />
-            </TouchableOpacity>
-          </View>
-          <View style={{}}>
-          <FlatList
-            showsHorizontalScrollIndicator={false}
-            horizontal={true}
-            data={Upperdata}
-            keyExtractor={item => item.id}
-            renderItem={UpperRender}
-          />
-        </View>
-        </ImageBackground>
-
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#000',
-          }}>
-          <RBSheet
-            ref={refRBSheet2}
-            height={height * 0.85}
-            closeOnDragDown={true}
-            closeOnPressMask={false}
-            customStyles={{
-              wrapper: {
-                backgroundColor: 'rgba(0, 0, 0, 0.24)',
-              },
-              draggableIcon: {
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
                 backgroundColor: '#000',
-              },
-              container: {
-                borderTopEndRadius: width * 0.035,
-                borderTopStartRadius: width * 0.035,
-              },
-            }}>
-            <Filter />
-          </RBSheet>
-        </View>
+              }}>
+              <RBSheet
+                ref={refRBSheet2}
+                height={height * 0.85}
+                closeOnDragDown={true}
+                closeOnPressMask={false}
+                customStyles={{
+                  wrapper: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.24)',
+                  },
+                  draggableIcon: {
+                    backgroundColor: '#000',
+                  },
+                  container: {
+                    borderTopEndRadius: width * 0.035,
+                    borderTopStartRadius: width * 0.035,
+                  },
+                }}>
+                <Filter />
+              </RBSheet>
+            </View>
 
-       
-      </View>
-      <ScrollView>
-        <View style={{ marginBottom: height * 0.25 }}>
-          <FlatList
-            scrollEnabled={true}
-            data={Lowerdata}
-            keyExtractor={item => item.id}
-            renderItem={LowerRender}
-          />
-        </View>
-      </ScrollView>
-      <View>
-        <RBSheet
-          ref={refRBSheet}
-          height={height * 0.95}
-          closeOnDragDown={true}
-          closeOnPressMask={false}
-          // dragFromTopOnly={false}
 
-          customStyles={{
-            wrapper: {
-              backgroundColor: 'transparent',
-            },
-            draggableIcon: {
-              backgroundColor: 'transparent',
-              paddingHorizontal: 25,
-            },
-            container: {
-              borderTopLeftRadius: width * 0.08,
-              borderTopRightRadius: width * 0.08,
-              // position:'absolute',
-              backgroundColor: 'transparent',
-            },
-          }}>
-          <RawBottomSheet />
-        </RBSheet>
-      </View>
-    </SafeAreaView>
+          </View>
+          <View style={{backgroundColor:"#ffffff",height:height}}>
+            {events?.data?.length !== 0 ?
+              <View style={{ marginBottom: height * 0.25 }}>
+                <FlatList
+                  scrollEnabled={true}
+                  data={events?.data}
+                  keyExtractor={item => item.id}
+                  renderItem={LowerRender}
+                  showsVerticalScrollIndicator={false}
+                  ListFooterComponent={
+                    <View style={{ height: 300 }}></View>
+                  }
+                />
+                {/* <View style={{height: 100}}  /> */}
+              </View>
+              :
+
+              <Image
+                style={{ alignSelf: "center", resizeMode: "contain", marginTop: height * 0.08 }}
+                source={require("../../assets/images/noevent.png")} />}
+          </View>
+          <View>
+            <RBSheet
+              ref={refRBSheet}
+              height={height * 0.95}
+              closeOnDragDown={true}
+              closeOnPressMask={false}
+              // dragFromTopOnly={false}
+
+              customStyles={{
+                wrapper: {
+                  backgroundColor: 'transparent',
+                },
+                draggableIcon: {
+                  backgroundColor: 'transparent',
+                  paddingHorizontal: 25,
+                },
+                container: {
+                  borderTopLeftRadius: width * 0.08,
+                  borderTopRightRadius: width * 0.08,
+                  // position:'absolute',
+                  backgroundColor: 'transparent',
+                },
+              }}>
+              <RawBottomSheet />
+            </RBSheet>
+          </View>
+        </> : <>
+          <View>
+            <ImageBackground
+              style={styles.backImage}
+              source={require('../../assets/images/backImage.png')}
+            >
+              <TouchableOpacity style={styles.backcontainer}
+                onPress={() => setPower(false)}
+              >
+                <Image
+                  style={{
+                    width: width * 0.04,
+                    height: height * 0.04,
+                  }}
+                  source={require('../../assets/images/prev.png')}
+                />
+              </TouchableOpacity>
+              <View style={styles.downContainer}>
+                <Image
+                  resizeMode='contain'
+                  style={styles.logo}
+                  source={require('../../assets/images/askipLogo.png')}
+                />
+                <Text style={{
+                  color: '#081a4f',
+                  textAlign: 'center',
+                  width: width * 0.72,
+                  textTransform: 'uppercase',
+                  paddingHorizontal: width * 0.04,
+                  fontSize: width * 0.05,
+                  fontWeight: 'bold',
+                  marginBottom: height * 0.058,
+                }}>
+                  Pour pouvoir t’inscrire
+                  à nos événements,
+                  il faut que tu complètes
+                  ton profil à 100% !
+                </Text>
+                <TouchableOpacity
+                  onPress={() => { navigation.navigate("ProfileScreens") }}
+                  style={{
+                    width: width * 0.55,
+                    height: height * 0.06,
+                    backgroundColor: '#081a4f',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    alignSelf: 'center',
+                    borderRadius: width * 0.03,
+                  }}>
+                  <Text style={{
+                    color: 'white',
+                    fontWeight: '500'
+                  }}>
+                    J’y fonce !
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+
+            </ImageBackground>
+          </View>
+        </>}
+    </View>
+
   );
 };
 
@@ -571,6 +980,58 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.017,
     fontFamily: 'Bebas Neue Pro Bold',
     marginVertical: height * 0.015,
+  }, backImage: {
+    width: width * 1,
+    height: width * 2,
+    flex: 1,
+  },
+  backcontainer: {
+    width: width * 0.16,
+    height: height * 0.08,
+    backgroundColor: '#fdbf18',
+    borderRadius: width * 0.35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: width * 0.045
+  },
+  gobackImage: {
+    width: width * 0.04,
+    height: height * 0.04,
+  },
+  downContainer: {
+    width: width * 0.7,
+    height: height * 0.7,
+    // backgroundColor: 'red',
+    alignSelf: 'center'
+  },
+  btn: {
+    width: width * 0.55,
+    height: height * 0.06,
+    backgroundColor: '#081a4f',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderRadius: width * 0.03,
+  },
+  txt: {
+    color: 'white',
+    fontWeight: '500'
+  },
+  logo: {
+    width: width * 0.6,
+    height: height * 0.23,
+    alignSelf: 'center',
+    marginTop: height * 0.05
+  },
+  description: {
+    color: '#081a4f',
+    textAlign: 'center',
+    width: width * 0.72,
+    textTransform: 'uppercase',
+    paddingHorizontal: width * 0.04,
+    fontSize: width * 0.05,
+    fontWeight: 'bold',
+    marginBottom: height * 0.058,
   },
   rbtext: {
     color: '#081a4f',
@@ -592,7 +1053,7 @@ const styles = StyleSheet.create({
   },
   upperViewMainImage: {
     width: width * 1,
-    height: height * 0.25,
+    height: height * 0.28,
     // paddingTop: height * 0.05
     // opacity: 0.7,
   },
@@ -650,9 +1111,18 @@ const styles = StyleSheet.create({
     height: height * 0.34,
     alignSelf: 'center',
     margin: width * 0.05,
-    borderRadius: width * 0.035,
+    borderRadius: width * 0.04,
     resizeMode: 'stretch',
-    elevation: 20,
+    backgroundColor: '#f0f0f0'
+    // elevation: 20,
+    // shadowColor: "#000",
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 12,
+    // },
+    // shadowOpacity: 0.58,
+    // shadowRadius: 16.00,
+
   },
   LowerRenderfirstview: {
     // width: width * 0.4,
@@ -674,10 +1144,12 @@ const styles = StyleSheet.create({
   },
   LowerRendersecondview: {
     width: width * 0.725,
-    height: height * 0.08,
+    // height: height * 0.08,
+    paddingVertical: 10,
     position: 'absolute',
+    bottom: 10,
     backgroundColor: 'white',
-    marginTop: height * 0.247,
+    // marginTop: height * 0.247,
     alignSelf: 'center',
     borderRadius: width * 0.039,
   },
@@ -789,10 +1261,6 @@ const styles = StyleSheet.create({
   },
   rawBottomlocation: {
     color: '#fdd460',
-    // fontSize: width * 0.045,
-    // fontWeight: 'bold',
-    // fontStyle: 'italic',
-    // paddingHorizontal: 10,
     fontSize: width * 0.05,
     fontFamily: 'Bebas Neue Pro Bold Italic',
     marginLeft: width * 0.015,
@@ -801,6 +1269,7 @@ const styles = StyleSheet.create({
     width: width * 0.05,
     height: height * 0.03,
     resizeMode: 'contain',
+    marginTop: Platform.OS == "ios" ? -height * 0.005 : null
   },
   rawBottomThirdView: {
     flexDirection: 'row',
@@ -830,10 +1299,23 @@ const styles = StyleSheet.create({
     height: height * 0.06,
     // height:height*0.0,
   },
+  SelectBUTt: {
+    backgroundColor: '#081a4f',
+    alignContent: 'center',
+    justifyContent: 'center',
+    width: width * 0.6,
+    borderRadius: width * 0.028,
+    alignSelf: 'center',
+    // margin: width * 0.22,
+    marginBottom: height * 0.115,
+    marginTop: height * 0.005,
+    height: height * 0.06,
+    // height:height*0.0,
+  },
   rawBottomButtonText: {
     color: 'white',
-    // padding: 14,
-    fontSize: width * 0.048,
+    paddingHorizontal: width * 0.025,
+    fontSize: width * 0.045,
     letterSpacing: 0.15,
     textAlign: 'center',
     fontFamily: 'Bebas Neue Pro Bold',
@@ -891,7 +1373,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     width: width * 0.7,
     // letterSpacing: -1,
-    fontFamily: 'Bebas Neue Bold Regular',
+    fontFamily: 'Bebas Neue Pro Regular',
     fontSize: width * 0.045,
   },
   scndmodalbtn: {

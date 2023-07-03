@@ -56,7 +56,8 @@ const Selector = (props) => {
                       textAlignVertical: "center",
                       fontSize: width * 0.035,
                       marginTop:height*0.007,
-                      color:"black"
+                      color:"black",
+                      paddingLeft:width*0.02
                     }}
                   >{item.name}</Text>
                 </TouchableOpacity>
@@ -86,6 +87,7 @@ const styles = StyleSheet.create({
   txt: {
     color: 'gray',
     fontSize: width * 0.035,
+    marginLeft:width*0.02
   },
   img: {
     width: width * 0.09,

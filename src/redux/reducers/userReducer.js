@@ -5,14 +5,16 @@ import {
   SET_PAGE_THREE,
   GET_KIFFS_DATA,
   RELEVENT,
-  DATA_EMPTY
+  DATA_EMPTY,
+  GET_EVENTS
 } from '../const/const';
-import {baseURL} from '../../config';
+import { baseURL } from '../../config';
 
 const InitialState = {
   data: [],
-  getKiffsData:[],
-  relevant:[],
+  getKiffsData: [],
+  relevant: [],
+  getEvents: [],
 
 };
 
@@ -42,24 +44,30 @@ const userReducer = (state = InitialState, action) => {
     //     ...state,
     //     data: action.payload,
     //   };
-     case GET_KIFFS_DATA:
+    case GET_KIFFS_DATA:
       // console.log(action.payload);
       return {
         ...state,
         getKiffsData: action?.payload,
       };
-      case DATA_EMPTY:
-     
-        return {
-          ...state,
-          data:[]
-        };
+    case DATA_EMPTY:
+
+      return {
+        ...state,
+        data: []
+      };
+    case GET_EVENTS:
+      // console.log("event details",action?.payload)
+      return {
+        ...state,
+        getEvents:action?.payload
+      };
     default:
       return state;
-      
-      
+
+
   }
-  
+
 };
 
 export default userReducer;

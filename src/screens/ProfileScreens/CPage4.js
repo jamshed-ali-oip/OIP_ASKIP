@@ -20,7 +20,7 @@ const CPage4 = ({setPage}) => {
 
   const confirm_Otp_Data_phone = useSelector((state)=>state?.auth?.forgetInnerPassData?.phone)
   const confirm_Otp_Data_email = useSelector((state)=>state?.auth?.forgetInnerPassData?.email)
-  console.log(confirm_Otp_Data_phone,confirm_Otp_Data_email)
+  // console.log(confirm_Otp_Data_phone,confirm_Otp_Data_email)
 
   const userConfirmation = () => {
     let userVerify = {

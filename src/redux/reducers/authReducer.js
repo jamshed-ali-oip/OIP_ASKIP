@@ -10,7 +10,8 @@ const InitialState = {
   consultData: [],
   userInfo: [],
   progress:0.1,
-  Tasweer:[]
+  Tasweer:[],
+  Test:false
 
 };
 
@@ -18,13 +19,13 @@ const authReducer = (state = InitialState, action) => {
   // console.log("here",action.type)
   switch (action.type) {
     case LOG_IN:
-      // console.log(action.payload);
+      console.log(action.payload);
       return {
         ...state,
         credential: action.payload,
       };
     case LOG_OUT:
-      // console.log(action.payload);
+      console.log(action.payload);
       return {
         credential: {},
       };
@@ -40,7 +41,7 @@ const authReducer = (state = InitialState, action) => {
         credential: action.payload
       }
     case ID_CARD_IMAGE:
-      // console.log(action.payload)
+      console.log(action.payload)
       return {
         ...state,
         profileData: action.payload
@@ -92,6 +93,8 @@ const authReducer = (state = InitialState, action) => {
         ...state,
         User: action.payload,
         progress:1,
+        Test:true
+
      
       }
       case PROFILE_IMAGE:
@@ -100,6 +103,11 @@ const authReducer = (state = InitialState, action) => {
           ...state,
           Tasweer: action.payload
         }
+        case "CLOSE":
+          return{
+            ...state,
+            Test:false
+          }
 
     default:
       return state;

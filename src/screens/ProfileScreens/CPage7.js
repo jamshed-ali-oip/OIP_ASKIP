@@ -1,13 +1,23 @@
 import {Dimensions, Image, StyleSheet, Text, View,TouchableOpacity} from 'react-native';
-import React from 'react';
+import React,{useEffect,useState} from 'react';
 import { useSelector } from 'react-redux';
+import { UserDetail } from '../../redux/actions/user.action';
+import { delay } from '@reduxjs/toolkit/dist/utils';
 const {width, height} = Dimensions.get('window');
 
 const CPage7 = ({setPage}) => {
-  
-  const email=useSelector(state => state?.auth?.User?.data?.email)
-  const credentialemail=useSelector(state => state?.auth?.credential?.User?.email)
-  // const userData=useSelector(state => state?.auth?.User)
+  const [detail, setDetail] = useState()
+  const userId = useSelector((state) => state?.auth?.credential?.User?._id)
+  useEffect(() => {
+
+    UserInfo()
+
+  }, [])
+  const UserInfo = async () => {
+    const {data}  = await UserDetail(userId)
+    setDetail(data?.User)
+
+  }
   return (
     <View style={styles.mainView}>
       <Text style={styles.heading}>télécharger mes données</Text>
@@ -21,7 +31,7 @@ const CPage7 = ({setPage}) => {
       <Text style={styles.confirmation}>Envoyer à l’adresse mail suivante :</Text>
 
       <View style={styles.view}>
-        <Text style={styles.email}>{email||credentialemail}</Text>
+        <Text style={styles.email}>{detail?.email}</Text>
         <Image
         style={styles.image}
           source={require('../../assets/images/verified.png')}

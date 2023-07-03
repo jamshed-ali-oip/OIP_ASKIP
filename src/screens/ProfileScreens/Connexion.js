@@ -31,7 +31,7 @@ const Connexion = () => {
   const [Data, setData] = useState();
 
   
-  console.log(Data,"PAGEPAGEPAGEPAGEPAGEPAGEPAGE")
+  // console.log(Data,"PAGEPAGEPAGEPAGEPAGEPAGEPAGE")
   
   return (
     <>

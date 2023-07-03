@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   Image,
   Modal,
+  LayoutAnimation,
+  Platform,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState,useEffect  } from 'react';
 import TopTab from '../../components/TopTab';
 import Colors from '../../assets/colors/Colors';
 // import SimpleGradientProgressbarView from 'react-native-simple-gradient-progressbar-view';
@@ -17,19 +19,49 @@ import { ImagePicker, launchImageLibrary } from 'react-native-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { LOG_OUT } from '../../redux/const/const';
 import ProfileImage from './ProfileImage';
+import Cmodal from '../../components/Cmodal';
+import { UserDetail } from '../../redux/actions/user.action';
+
 
 const { height, width } = Dimensions.get('window');
-const ProfileScreens = () => {
+const ProfileScreens = ({navigation}) => {
   const dispatch = useDispatch()
-  const firstName=useSelector(state => state?.auth?.User?.data?.lastName)
-  const userdataFname=useSelector(state => state?.auth?.credential?.User?.lastName)
+  const userId = useSelector((state) => state?.auth?.credential?.User?._id)
+  const [detail, setDetail] = useState()
+  useEffect(() => {
+    UserInfo()
+  }, [])
+  const UserInfo = async () => {
+    const { data } = await UserDetail(userId)
+    setDetail(data?.User)
+
+  }
+//  console.log("progress details",detail)
+  const kiffs=useSelector(state => state?.auth?.credential?.User?.kiffs)
   const [modalVisible, setModalVisible] = useState(false);
+  // console.log("modalVisible",modalVisible)
   const [image, setImage] = useState();
-  console.log("tasweer",image)
-  const signOut = () => {
-    dispatch({
-      type: LOG_OUT
+  // console.log("tasweer",image)
+  const test = async () =>{
+    await dispatch({
+      type:LOG_OUT
     })
+  }
+  const closeModal=async()=>{
+    await setModalVisible(false);
+    test()
+  }
+  const signOut =async () => {
+    // console.log('====================================');
+
+    await closeModal()
+    // console.log(modalVisible);
+    // console.log('====================================');
+    // LayoutAnimation.easeInEaseOut();
+    // dispatch({
+    //   type: LOG_OUT
+    // })
+
   }
 
   const onFromPickerImage = () => {
@@ -43,11 +75,11 @@ const ProfileScreens = () => {
     launchImageLibrary(options, (response) => {
       // Same code as in above section!
 
-      console.log(("image================",response.assets))
+      // console.log(("image================",response.assets))
       if (response) {
       
       }else{
-        console.log("not selected")
+        // console.log("not selected")
       }
      
     });
@@ -66,62 +98,21 @@ const ProfileScreens = () => {
           }}
           source={require('../../assets/images/Header.png')}>
           <TouchableOpacity
+          style={{marginTop: Platform.OS == 'ios' ? 0 :  20}}
             onPress={() => {
               setModalVisible(true);
+              UserInfo()
+         
             }}>
             <Image
-              style={{ alignSelf: 'flex-end' }}
+              style={{ alignSelf: 'flex-end',marginTop:Platform.OS=="ios"?height*0.05:null }}
               source={require('../../assets/images/signout.png')}
             />
           </TouchableOpacity>
         </ImageBackground>
         <View style={styles.box}>
-          {/* <View style={styles.profile}>
-            <TouchableOpacity
-              onPress={() => { onFromPickerImage() }}
-            >
-              <Image
-                style={{
-                  height: height * 0.11,
-                  width: width * 0.2,
-                  resizeMode: 'contain',
-                  borderRadius: width * 0.5,
-                  alignSelf: 'center',
-                }}
-                source={require('../../assets/images/avatar.jpg')}
-              />
-            </TouchableOpacity>
-          </View> */}
           <ProfileImage/>
           
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-            }}>
-            <Text
-              style={{
-                color: Colors.theme_color,
-                // fontSize: width * 0.05,
-                fontFamily: 'Bebas Neue Pro Book',
-                fontSize: width * 0.063,
-                letterSpacing: 0.3,
-              }}>
-              SALUT
-            </Text>
-            <Text
-              style={{
-                color: Colors.theme_color,
-                // fontSize: width * 0.05,
-                // fontWeight: '800',\
-                fontFamily: 'Bebas Neue Pro Bold',
-                fontSize: width * 0.065,
-                letterSpacing: 0.3,
-                paddingHorizontal: width * 0.01,
-              }}>
-             {firstName||userdataFname} !
-            </Text>
-          </View>
           <View
             style={{
               flexDirection: 'row',
@@ -139,16 +130,15 @@ const ProfileScreens = () => {
             />
             <Text
               style={{
-                // fontSize: width * 0.04,
-                // fontWeight: '700',
+        
                 color: Colors.ButtonBorder,
                 fontFamily: 'Bebas Neue Pro Regular',
                 fontSize: width * 0.05,
               }}>
-              345 Points
+            0 Points
             </Text>
           </View>
-          <Text
+          {/* <Text
             style={{
               fontSize: width * 0.037,
               color: 'black',
@@ -158,23 +148,11 @@ const ProfileScreens = () => {
               fontFamily: 'Bebas Neue Pro Regular',
               fontSize: width * 0.046,
               letterSpacing: 0.3,
-            }}>
-            TON PROFIL EST INCOMPLET !
-          </Text>
-          <View style={{ marginTop: height * 0.03 }}>
-            {/* <Text
-              style={{
-                position: 'absolute',
-                zIndex: 1,
-                marginLeft: width * 0.7,
-                marginTop: -height * 0.012,
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: width * 0.035,
-              }}>
-              100
-            </Text> */}
-            {/* progresss barrr */}
+            }}>{kiffs==null?"TON PROFIL EST INCOMPLET !":"TON PROFIL EST COMPLET !"}
+            
+          </Text> */}
+          <View >
+        
             <Progressbar progress={1} />
           </View>
         </View>
@@ -198,19 +176,20 @@ const ProfileScreens = () => {
                 source={require('../../assets/images/backgroundImage.png')}>
                 <>
                   <Text style={styles.modalText}>
-                    <Text style={{ fontWeight: 'bold' }}>{firstName||userdataFname}, </Text>
+                    <Text style={{ fontWeight: 'bold' }}>{detail?.firstName}, </Text>
                     veux-tu vraiment te déconnecter ?
                   </Text>
                   <View
                     style={{
                       flexDirection: 'row',
                       paddingHorizontal: width * 0.045,
+                      marginTop:-height*0.02
                     }}>
                     <TouchableOpacity
                       onPress={() => {
                         // signout();
                         signOut()
-                        console.log("logout here...")
+                        // console.log("logout here...")
                       }}
                       style={styles.Butons}>
                       <Text style={styles.btn}>Oui</Text>
@@ -228,6 +207,10 @@ const ProfileScreens = () => {
             </View>
           </View>
         </Modal>
+        <Cmodal
+        onPress={()=>{navigation.navigate("HomeScreens")}}
+        onPress2={()=>{navigation.navigate("EventsScreens")}}
+        />
       </View>
     </>
   );
@@ -298,8 +281,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignSelf: 'center',
     borderRadius: width * 0.05,
-    elevation: 5,
-    marginTop: height * 0.08,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.39,
+    shadowRadius: 8.30,
+    elevation: 12,
+    marginTop: Platform.OS=="ios"?height * 0.09:height * 0.08,
   },
   profile: {
     backgroundColor: Colors.whitetext,
